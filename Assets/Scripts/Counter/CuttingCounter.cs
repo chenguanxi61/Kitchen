@@ -5,13 +5,14 @@ using System.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class CuttingCounter : BaseCounter
+public class CuttingCounter : BaseCounter, IHasProgressBar
 {
    [SerializeField] private CuttingRecipeSO[] cuttingRecipesSOArray;
-
+   private IHasProgressBar hasProgressBar;
+   
    private int cuttingProgress;
-
-   public UnityAction<float> OnProgressChanged;
+   
+   public event UnityAction<float> OnProgressChanged;
    
    
    public override void Interact(Player player)
