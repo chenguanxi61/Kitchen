@@ -64,4 +64,17 @@ public class KitchenObj : MonoBehaviour
         return obj.transform.GetComponent<KitchenObj>();
     }
     
+    public bool TryGetPlate(out PlateKitchObj plateKitchObj)
+    {
+        if (this is PlateKitchObj)
+        {
+            plateKitchObj = this as PlateKitchObj;
+            return true;
+        }
+        else
+        {
+            plateKitchObj = null;
+            return false;
+        }
+    }
 }

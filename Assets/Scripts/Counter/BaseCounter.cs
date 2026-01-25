@@ -24,6 +24,7 @@ public class BaseCounter : MonoBehaviour,IKitchObjParent
     {
         this.kitchenObj = kitchenObj;
     }
+    //拿到桌面上的东西
     public KitchenObj GetKitchenObj()
     {
         return kitchenObj;

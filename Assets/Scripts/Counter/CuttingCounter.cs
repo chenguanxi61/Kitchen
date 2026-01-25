@@ -36,6 +36,17 @@ public class CuttingCounter : BaseCounter, IHasProgressBar
          GetKitchenObj().SetKitchenObjParent(player);
          
       }
+      
+      // 情况 3：柜台有东西，玩家也有东西 → 尝试把柜台的东西放到玩家手上的盘子里（如果玩家拿着盘子的话）
+      if (player.GetKitchenObj().TryGetPlate(out PlateKitchObj plateKitchObj))
+      {
+         //玩家拿着盘子
+         if(plateKitchObj.TryAddSomething(GetKitchenObj().GetKitchenObjSO()))
+         {
+            GetKitchenObj().DestroySelf();
+         }
+                    
+      }
    }
    public override void InteractAlternate(Player player)
    {
