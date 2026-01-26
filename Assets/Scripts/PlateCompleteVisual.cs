@@ -16,6 +16,7 @@ public class PlateCompleteVisual : MonoBehaviour
 
     public void Awake()
     {
+        
     }
 
     private void Start()
