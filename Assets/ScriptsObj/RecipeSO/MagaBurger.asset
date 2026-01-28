@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d4e6447aa7aae64e93dfa4b8ff8be31, type: 3}
+  m_Name: MagaBurger
+  m_EditorClassIdentifier: 
+  kitchenObjSOList:
+  - {fileID: 11400000, guid: 41b55e564f0381a46b77942c61b19c90, type: 2}
+  - {fileID: 11400000, guid: 842a9703ec6114749b2642dd870f9b19, type: 2}
+  - {fileID: 11400000, guid: d91213852d571a0498df32810718537f, type: 2}
+  - {fileID: 11400000, guid: fa78bce916bab214eb721b324f7709b4, type: 2}
+  - {fileID: 11400000, guid: c148270b1c191b3439ffce6ed8d9e293, type: 2}
+  name: MagaBurger

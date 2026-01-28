@@ -7,7 +7,7 @@ using UnityEngine.Events;
 public class PlateKitchObj : KitchenObj
 {
     [SerializeField] private List<KitchenObjSO> validKitchenObjSOList;//  盘子里可以装的东西列表
-    private List<KitchenObjSO> plateKitchenObjSOList;
+    private List<KitchenObjSO> plateKitchenObjSOList;// 盘子里装的东西列表
     public Action<KitchenObjSO> OnAddSomething;
 
     public void Awake()
