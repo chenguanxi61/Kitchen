@@ -11,6 +11,9 @@ public class DeliverManager : MonoBehaviour
     public Action OnRecipeSpawned; 
     public Action OnRecipeCompleted; 
     
+    public Action OnDeliverySuccess;
+    public Action OnDeliveryFail;
+    
     private List<RecipeSO> waitingRecipeSOList;   // 等待中菜品
     [SerializeField] private List<RecipeSO> recipeSOList; // 所有菜品
     [SerializeField] private int waitingRecipeMax = 4;
@@ -97,6 +100,7 @@ public class DeliverManager : MonoBehaviour
                 if (!ingredientFound)
                 {
                     plateMatchesRecipe = false;
+                    
                     break;
                 }
             }
@@ -110,11 +114,13 @@ public class DeliverManager : MonoBehaviour
 
                 // TODO：加分 / UI / 音效 / 事件
                 OnRecipeCompleted?.Invoke();
+                OnDeliverySuccess?.Invoke();
                 return;
             }
         }
 
         Debug.Log("送菜失败！");
+        OnDeliveryFail?.Invoke();
     }
     
     public List<RecipeSO> GetWaitingRecipeSOList()

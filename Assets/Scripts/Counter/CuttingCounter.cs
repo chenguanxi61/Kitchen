@@ -13,7 +13,7 @@ public class CuttingCounter : BaseCounter, IHasProgressBar
    private int cuttingProgress;
    
    public event UnityAction<float> OnProgressChanged;
-   
+   public static Action<Vector3> OnCutting;
    
    public override void Interact(Player player)
    {
@@ -56,7 +56,7 @@ public class CuttingCounter : BaseCounter, IHasProgressBar
          cuttingProgress++;
          CuttingRecipeSO recipe = GetCuttingRecipeSO(GetKitchenObj().GetKitchenObjSO());
          OnProgressChanged?.Invoke((float)cuttingProgress/recipe.cuttingProgressMax);
-        
+         OnCutting?.Invoke(transform.position);
          if (cuttingProgress >= recipe.cuttingProgressMax)
          {
             KitchenObjSO outputKitchenObj = GetCuttingObjSO(GetKitchenObj().GetKitchenObjSO());
