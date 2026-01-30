@@ -23,6 +23,7 @@ public class Player : MonoBehaviour ,IKitchObjParent
         public BaseCounter SelectedCounter;
     }
     
+    public Action<Vector3> OnPickedSomething;
     
     private Vector3 lastInteractDir;
 
@@ -188,6 +189,8 @@ public class Player : MonoBehaviour ,IKitchObjParent
     public void SetKitchenObj(KitchenObj kitchenObj)
     {
         this.kitchenObj = kitchenObj;
+        if(kitchenObj!=null)
+            OnPickedSomething?.Invoke(kitchenObj.transform.position);
     }
 
     public KitchenObj GetKitchenObj()

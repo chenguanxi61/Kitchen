@@ -16,4 +16,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 41b55e564f0381a46b77942c61b19c90, type: 2}
   - {fileID: 11400000, guid: 842a9703ec6114749b2642dd870f9b19, type: 2}
   - {fileID: 11400000, guid: d91213852d571a0498df32810718537f, type: 2}
-  name: Burger
+  name: CheeseBurger
