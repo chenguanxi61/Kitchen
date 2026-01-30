@@ -1,11 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using Random = UnityEngine.Random;
 
 public class DeliverManager : MonoBehaviour
 {
     public static DeliverManager Instance { get; private set; }
     
+    public Action OnRecipeSpawned; 
+    public Action OnRecipeCompleted; 
     
     private List<RecipeSO> waitingRecipeSOList;   // 等待中菜品
     [SerializeField] private List<RecipeSO> recipeSOList; // 所有菜品
@@ -55,7 +59,7 @@ public class DeliverManager : MonoBehaviour
         waitingRecipeSOList.Add(randomRecipeSO);
         Debug.Log("New Recipe Spawned: " + randomRecipeSO.name);
         // TODO: 触发 UI 更新事件
-        // OnRecipeSpawned?.Invoke(randomRecipeSO);
+        OnRecipeSpawned?.Invoke();
     }
     //送餐
     public void DeliverRecipe(PlateKitchObj plateKitchObj)
@@ -105,10 +109,16 @@ public class DeliverManager : MonoBehaviour
                 waitingRecipeSOList.RemoveAt(i);
 
                 // TODO：加分 / UI / 音效 / 事件
+                OnRecipeCompleted?.Invoke();
                 return;
             }
         }
 
         Debug.Log("送菜失败！");
+    }
+    
+    public List<RecipeSO> GetWaitingRecipeSOList()
+    {
+        return waitingRecipeSOList;
     }
 }
