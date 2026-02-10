@@ -22,9 +22,11 @@ public class Player : MonoBehaviour ,IKitchObjParent
     {
         public BaseCounter SelectedCounter;
     }
-    
+    //音效----------------------------------------
     public Action<Vector3> OnPickedSomething;
-    
+
+    public Action<Vector3> OnMoving;
+    //--------------------------------------------
     private Vector3 lastInteractDir;
 
     private bool isWalking = false;
@@ -173,6 +175,10 @@ public class Player : MonoBehaviour ,IKitchObjParent
 
         // walking 状态
         isWalking = canMove && inputVector != Vector2.zero;
+        if(isWalking)
+        {
+            OnMoving?.Invoke(transform.position);
+        }
     }
     
     private void SetSelectedCounter(BaseCounter selectedCounter)

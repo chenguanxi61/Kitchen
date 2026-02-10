@@ -8,6 +8,8 @@ public class StoveCounter : BaseCounter,IHasProgressBar
 {
     public event UnityAction<float> OnProgressChanged; 
     public  UnityAction<State> OnStateChanged;
+    
+    public static Action<Vector3> OnAnyObjectFried;
     //状态机状态
     public enum State
     {
@@ -34,6 +36,7 @@ public class StoveCounter : BaseCounter,IHasProgressBar
     {
         if (HasKitchenObj())
         {
+            
             switch (state)
             {
                 case State.Idle:
@@ -49,6 +52,8 @@ public class StoveCounter : BaseCounter,IHasProgressBar
                         
                         state = State.Fryed;
                         burningTime = 0f;
+                        
+                        
                         //拿到台子上物品的烧焦配方SO
                         burningRecipeSO = GetBurningRecipeSOWithInput(GetKitchenObj().GetKitchenObjSO());
                         
