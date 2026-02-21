@@ -10,6 +10,8 @@ public class DeliveryManagerUI : MonoBehaviour
     
     [SerializeField] private Transform container;
     [SerializeField] private Transform itemTemplate;//菜品模板
+    
+    
 
 
     private void Awake()

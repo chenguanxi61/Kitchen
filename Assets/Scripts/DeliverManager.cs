@@ -17,6 +17,8 @@ public class DeliverManager : MonoBehaviour
     private List<RecipeSO> waitingRecipeSOList;   // 等待中菜品
     [SerializeField] private List<RecipeSO> recipeSOList; // 所有菜品
     [SerializeField] private int waitingRecipeMax = 4;
+    
+    private int successfulDeliveries;
 
     private Coroutine spawnCoroutine;
 
@@ -109,7 +111,7 @@ public class DeliverManager : MonoBehaviour
             if (plateMatchesRecipe)
             {
                 Debug.Log("送菜成功！");
-
+                successfulDeliveries++;
                 waitingRecipeSOList.RemoveAt(i);
 
                 // TODO：加分 / UI / 音效 / 事件
@@ -126,5 +128,10 @@ public class DeliverManager : MonoBehaviour
     public List<RecipeSO> GetWaitingRecipeSOList()
     {
         return waitingRecipeSOList;
+    }
+    
+    public int GetSuccessfulDeliveries()
+    {
+        return successfulDeliveries;
     }
 }

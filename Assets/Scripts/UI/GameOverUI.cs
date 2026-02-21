@@ -1,13 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class GameStartCountDownUI : MonoBehaviour
+public class GameOverUI : MonoBehaviour
 {
-    [SerializeField] private TextMeshProUGUI Text;
-    
+    [SerializeField] private Text recopesDeliveredText;
+
     public void Start()
     {
         GameManager.Instance.OnStateChanged += GameManager_OnStateChanged;
@@ -16,8 +16,9 @@ public class GameStartCountDownUI : MonoBehaviour
     
     private void GameManager_OnStateChanged(GameManager.State state)
     {
-        if (state == GameManager.State.CountdownToStart)
+        if (GameManager.Instance.IsOver())
         {
+            recopesDeliveredText.text = DeliverManager.Instance.GetSuccessfulDeliveries().ToString();
             Show();
         }
         else
@@ -28,8 +29,6 @@ public class GameStartCountDownUI : MonoBehaviour
 
     private void Update()
     {
-        Text.text = Math.Ceiling(GameManager.Instance.GetCountDownToStartTimer()).ToString();
-        Debug.Log(Text.text);
     }
 
     private void Show()
@@ -41,6 +40,5 @@ public class GameStartCountDownUI : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    
-    
+
 }
