@@ -2,9 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using Unity.Netcode;
+
 using Random = UnityEngine.Random;
 
-public class DeliverManager : MonoBehaviour
+public class DeliverManager : NetworkBehaviour
 {
     public static DeliverManager Instance { get; private set; }
     
@@ -27,9 +29,18 @@ public class DeliverManager : MonoBehaviour
         Instance = this;
         waitingRecipeSOList = new List<RecipeSO>();
     }
+    
+    public override void OnNetworkSpawn()
+    {
+        if (!IsServer)
+        {
+            RequestCurrentRecipesServerRpc();
+        }
+    }
 
     private void Start()
     {
+        
         // 开局立刻生成一次
         SpawnNewRecipe();
 
@@ -39,6 +50,7 @@ public class DeliverManager : MonoBehaviour
 
     private IEnumerator SpawnRecipeLoop()
     {
+        
         while (true)
         {
             // 如果没满，才等待并生成
@@ -60,10 +72,48 @@ public class DeliverManager : MonoBehaviour
         if (waitingRecipeSOList.Count >= waitingRecipeMax) return;
 
         int randomIndex = Random.Range(0, recipeSOList.Count);
-        RecipeSO randomRecipeSO = recipeSOList[randomIndex];
-        waitingRecipeSOList.Add(randomRecipeSO);
-        Debug.Log("New Recipe Spawned: " + randomRecipeSO.name);
-        // TODO: 触发 UI 更新事件
+        
+
+        
+        
+        // 广播给所有客户端
+        SpawnNewRecipeClientRpc(randomIndex);
+        
+        
+    }
+
+    [ClientRpc]
+    private void SpawnNewRecipeClientRpc(int recipeIndex)
+    {
+        
+        RecipeSO recipe = recipeSOList[recipeIndex];
+        waitingRecipeSOList.Add(recipe);
+
+        // 通知UI更新
+        OnRecipeSpawned?.Invoke();
+    }
+    // -------- 后加入的客户端请求当前菜谱 --------
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestCurrentRecipesServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        // 遍历当前菜谱，逐一发送给该客户端
+        for (int i = 0; i < waitingRecipeSOList.Count; i++)
+        {
+            int recipeIndex = recipeSOList.IndexOf(waitingRecipeSOList[i]);
+            SendCurrentRecipeToClientClientRpc(recipeIndex, new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { clientId } }
+            });
+        }
+    }
+    
+    [ClientRpc]
+    private void SendCurrentRecipeToClientClientRpc(int recipeIndex, ClientRpcParams rpcParams = default)
+    {
+        RecipeSO recipe = recipeSOList[recipeIndex];
+        waitingRecipeSOList.Add(recipe);
         OnRecipeSpawned?.Invoke();
     }
     //送餐

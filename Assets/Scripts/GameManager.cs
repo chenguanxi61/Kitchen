@@ -20,14 +20,21 @@ public class GameManager : MonoBehaviour
     
     public Action<State> OnStateChanged;
     
-    private float waitingToStartTimer = 0.1f;
+    private float waitingToStartTimer = 1f;
     private float countDownToStartTimer = 3f;
-    private float gamePlayingTimer = 30f;
+    private float gamePlayingTimer = 300f;
     private float gamePlayingTimerMax = 30f;
     private void Awake()
     {
         Instance = this;
         state = State.WaitingToStart;
+    }
+    
+    private void Start()
+    {
+        //测试用直接进入游戏状态
+        state = State.CountdownToStart;
+        OnStateChanged?.Invoke(state);
     }
 
     private void Update()

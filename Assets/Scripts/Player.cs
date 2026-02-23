@@ -1,16 +1,17 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class Player : MonoBehaviour ,IKitchObjParent
+public class Player : NetworkBehaviour ,IKitchObjParent
 {
     
-    public static Player Instance{get; private set;}
+    //public static Player Instance{get; private set;}
     
     
     
-    [SerializeField] private GameInput gameInput;
+    
     [SerializeField] private float speed = 7f;
     [SerializeField] private LayerMask countersLayerMask;
     
@@ -35,16 +36,12 @@ public class Player : MonoBehaviour ,IKitchObjParent
 
     public void Awake()
     {
-        if (Instance != null)
-        {
-            Debug.LogError("已经存在Player实例");
-        }
-        Instance = this;
+        //Instance = this;
     }
     private void Start()
     {
-        gameInput.OnInteractAction += GameInput_OnInteractAction;
-        gameInput.OnInteractAlternateAction += GameInput_OnInteractAlternateAction;
+        GameInput.Instance.OnInteractAction += GameInput_OnInteractAction;
+        GameInput.Instance.OnInteractAlternateAction += GameInput_OnInteractAlternateAction;
     }
 
     private void GameInput_OnInteractAlternateAction(object sender, EventArgs e)
@@ -66,6 +63,11 @@ public class Player : MonoBehaviour ,IKitchObjParent
 
     private void Update()
     {
+        if (!IsOwner)
+        {
+            return;
+        }
+        //HandleMovementServerAuth();
         HandleMovement();
         HandleInteractions();
     }
@@ -74,10 +76,86 @@ public class Player : MonoBehaviour ,IKitchObjParent
     {
         return isWalking;
     }
+
+    private void HandleMovementServerAuth()
+    {
+        Vector2 inputVector = GameInput.Instance.GetMoveVectorNormalized();
+        HandleMovementServerRpc(inputVector);
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void HandleMovementServerRpc(Vector2 inputVector)
+    {
+        Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y).normalized;
+
+        float moveDistance = speed * Time.deltaTime;
+        float playerRadius = .7f;
+        float playerHeight = 2f;
+
+        bool canMove = moveDir != Vector3.zero &&
+                       !Physics.CapsuleCast(transform.position, 
+                                            transform.position + Vector3.up * playerHeight,
+                                            playerRadius,
+                                            moveDir,
+                                            moveDistance);
+
+        // 斜向移动被阻挡 → 尝试 X / Z 单轴移动
+        if (!canMove && moveDir != Vector3.zero)
+        {
+            // X 轴
+            Vector3 moveDirX = new Vector3(moveDir.x, 0, 0);
+            if (moveDir.x != 0 &&
+                !Physics.CapsuleCast(transform.position,
+                                     transform.position + Vector3.up * playerHeight,
+                                     playerRadius,
+                                     moveDirX,
+                                     moveDistance))
+            {
+                moveDir = moveDirX;
+                canMove = true;
+            }
+            else
+            {
+                // Z 轴
+                Vector3 moveDirZ = new Vector3(0, 0, moveDir.z);
+                if (moveDir.z != 0 &&
+                    !Physics.CapsuleCast(transform.position,
+                                         transform.position + Vector3.up * playerHeight,
+                                         playerRadius,
+                                         moveDirZ,
+                                         moveDistance))
+                {
+                    moveDir = moveDirZ;
+                    canMove = true;
+                }
+            }
+        }
+
+        // 移动逻辑
+        if (canMove)
+        {
+            transform.position += moveDir * moveDistance;
+
+            if (moveDir != Vector3.zero)
+            {
+                transform.forward = Vector3.Slerp(
+                    transform.forward, 
+                    moveDir,
+                    Time.deltaTime * 10f
+                );
+            }
+        }
+
+        // walking 状态
+        isWalking = canMove && inputVector != Vector2.zero;
+        if(isWalking)
+        {
+            OnMoving?.Invoke(transform.position);
+        }
+    }
     //交互处理
     private void HandleInteractions()
     {
-        Vector2 inputVector = gameInput.GetMoveVectorNormalized();
+        Vector2 inputVector = GameInput.Instance.GetMoveVectorNormalized();
         Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y).normalized;
 
         if (moveDir != Vector3.zero)
@@ -112,7 +190,7 @@ public class Player : MonoBehaviour ,IKitchObjParent
 
     private void HandleMovement()
     {
-        Vector2 inputVector = gameInput.GetMoveVectorNormalized();
+        Vector2 inputVector = GameInput.Instance.GetMoveVectorNormalized();
         Vector3 moveDir = new Vector3(inputVector.x, 0f, inputVector.y).normalized;
 
         float moveDistance = speed * Time.deltaTime;

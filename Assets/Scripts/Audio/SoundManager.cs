@@ -22,9 +22,9 @@ public class SoundManager : MonoBehaviour
         //切菜
         CuttingCounter.OnCutting += CuttingCounter_OnCutting;
         //拿取东西
-        Player.Instance.OnPickedSomething += Player_OnPickedSomething;
+        //Player.Instance.OnPickedSomething += Player_OnPickedSomething;
         //玩家移动
-        Player.Instance.OnMoving += Player_OnMoving;
+        //Player.Instance.OnMoving += Player_OnMoving;
         //物品放置
         BaseCounter.OnAnyObjectPlaced += BaseCounter_OnAnyObjectPlaced;
         //扔垃圾

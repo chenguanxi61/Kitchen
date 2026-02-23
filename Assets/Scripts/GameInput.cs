@@ -10,8 +10,11 @@ public class GameInput : MonoBehaviour
    
    public event EventHandler OnInteractAction;
    public event EventHandler OnInteractAlternateAction;
+   
+   public static GameInput Instance { get; private set; }
    private void Awake()
    {
+      Instance = this;
       playerInputActions = new PlayerInputAction();
       playerInputActions.PLayer.Enable();
       playerInputActions.PLayer.Interact.performed += Interact_performed;
