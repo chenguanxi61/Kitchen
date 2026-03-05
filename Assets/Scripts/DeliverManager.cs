@@ -73,9 +73,6 @@ public class DeliverManager : NetworkBehaviour
 
         int randomIndex = Random.Range(0, recipeSOList.Count);
         
-
-        
-        
         // 广播给所有客户端
         SpawnNewRecipeClientRpc(randomIndex);
         
@@ -93,7 +90,7 @@ public class DeliverManager : NetworkBehaviour
         OnRecipeSpawned?.Invoke();
     }
     // -------- 后加入的客户端请求当前菜谱 --------
-    [ServerRpc(RequireOwnership = false)]
+    [ServerRpc]
     private void RequestCurrentRecipesServerRpc(ServerRpcParams rpcParams = default)
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
