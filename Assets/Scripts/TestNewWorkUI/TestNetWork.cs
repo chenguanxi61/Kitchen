@@ -7,21 +7,31 @@ using Unity.Netcode;
 public class TestNetWork : MonoBehaviour
 {
     [SerializeField] private Button startHostButton;
-    [SerializeField] private Button startclientButton;
+    [SerializeField] private Button startClientButton;
+
     private void Awake()
     {
-        startHostButton.onClick.AddListener(() =>
+        if (NetworkManager.Singleton == null)
         {
-            Debug.Log("Start Host");
-            NetworkManager.Singleton.StartHost();
-            Hide();
-        });
-        startclientButton.onClick.AddListener(() =>
+            Debug.LogError("NetworkManager.Singleton is null. TestNetWork UI is disabled.");
+            startHostButton.interactable = false;
+            startClientButton.interactable = false;
+            return;
+        }
+
+        startHostButton.onClick.AddListener(() => StartNetworkMode(NetworkManager.Singleton.StartHost, "Host"));
+        startClientButton.onClick.AddListener(() => StartNetworkMode(NetworkManager.Singleton.StartClient, "Client"));
+    }
+
+    private void StartNetworkMode(System.Func<bool> startMode, string modeName)
+    {
+        bool startedSuccessfully = startMode();
+        Debug.Log($"Start {modeName}: {(startedSuccessfully ? "Success" : "Failed")}");
+
+        if (startedSuccessfully)
         {
-            Debug.Log("Start Client");
-            NetworkManager.Singleton.StartClient();
             Hide();
-        });
+        }
     }
 
     private void Hide()

@@ -40,6 +40,10 @@ public class DeliverManager : NetworkBehaviour
 
     private void Start()
     {
+        if (!IsServer)
+        {
+            return;
+        }
         
         // 开局立刻生成一次
         SpawnNewRecipe();

@@ -32,7 +32,7 @@ public class GameManager : MonoBehaviour
     
     private void Start()
     {
-        //测试用直接进入游戏状态
+        //测试用：直接进入倒计时状态（跳过等待阶段）
         state = State.CountdownToStart;
         OnStateChanged?.Invoke(state);
     }
