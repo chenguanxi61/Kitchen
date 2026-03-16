@@ -30,13 +30,13 @@ public class DeliverManager : NetworkBehaviour
         waitingRecipeSOList = new List<RecipeSO>();
     }
     
-    public override void OnNetworkSpawn()
+    /*public override void OnNetworkSpawn()
     {
         if (!IsServer)
         {
             RequestCurrentRecipesServerRpc();
         }
-    }
+    }*/
 
     private void Start()
     {
@@ -73,7 +73,7 @@ public class DeliverManager : NetworkBehaviour
 
         int randomIndex = Random.Range(0, recipeSOList.Count);
         
-        // 广播给所有客户端
+        //广播给所有客户端
         SpawnNewRecipeClientRpc(randomIndex);
         
         
@@ -90,7 +90,7 @@ public class DeliverManager : NetworkBehaviour
         OnRecipeSpawned?.Invoke();
     }
     // -------- 后加入的客户端请求当前菜谱 --------
-    [ServerRpc]
+    /*[ServerRpc]
     private void RequestCurrentRecipesServerRpc(ServerRpcParams rpcParams = default)
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
@@ -104,15 +104,15 @@ public class DeliverManager : NetworkBehaviour
                 Send = new ClientRpcSendParams { TargetClientIds = new ulong[] { clientId } }
             });
         }
-    }
+    }*/
     
-    [ClientRpc]
+    /*[ClientRpc]
     private void SendCurrentRecipeToClientClientRpc(int recipeIndex, ClientRpcParams rpcParams = default)
     {
         RecipeSO recipe = recipeSOList[recipeIndex];
         waitingRecipeSOList.Add(recipe);
         OnRecipeSpawned?.Invoke();
-    }
+    }*/
     //送餐
     public void DeliverRecipe(PlateKitchObj plateKitchObj)
     {
@@ -157,19 +157,41 @@ public class DeliverManager : NetworkBehaviour
             // 5. 全部匹配成功
             if (plateMatchesRecipe)
             {
-                Debug.Log("送菜成功！");
-                successfulDeliveries++;
-                waitingRecipeSOList.RemoveAt(i);
-
-                // TODO：加分 / UI / 音效 / 事件
-                OnRecipeCompleted?.Invoke();
-                OnDeliverySuccess?.Invoke();
+                DeliverRecipeServerRpc(i);
                 return;
             }
         }
 
         Debug.Log("送菜失败！");
+        DeliverIncorrectRecipeServerRpc();
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void DeliverIncorrectRecipeServerRpc()
+    {
+        DeliverIncorrectRecipeClientRpc();
+    }
+    [ClientRpc]
+    private void DeliverIncorrectRecipeClientRpc()
+    {
         OnDeliveryFail?.Invoke();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void DeliverRecipeServerRpc(int recipeIndex)
+    {
+        DeliverCorrectRecipeClientRpc(recipeIndex);
+    }
+    // 通知客户端送菜成功
+    [ClientRpc]
+    private void DeliverCorrectRecipeClientRpc(int recipeIndex, ClientRpcParams rpcParams = default)
+    {
+        Debug.Log("送菜成功！");
+        successfulDeliveries++;
+        waitingRecipeSOList.RemoveAt(recipeIndex);
+
+        // TODO：加分 / UI / 音效 / 事件
+        OnRecipeCompleted?.Invoke();
+        OnDeliverySuccess?.Invoke();
     }
     
     public List<RecipeSO> GetWaitingRecipeSOList()

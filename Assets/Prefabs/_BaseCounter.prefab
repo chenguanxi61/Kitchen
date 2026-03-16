@@ -41,6 +41,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1870011415211764203}
   - component: {fileID: 7743741673059190898}
+  - component: {fileID: 2952297186805476089}
   m_Layer: 6
   m_Name: _BaseCounter
   m_TagString: Untagged
@@ -85,3 +86,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.35, y: 1.5, z: 1.65}
   m_Center: {x: 0, y: 0.5, z: 0.04}
+--- !u!114 &2952297186805476089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5619050908659003229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 0
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1

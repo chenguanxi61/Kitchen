@@ -7,9 +7,14 @@ using UnityEngine;
 public class Player : NetworkBehaviour ,IKitchObjParent
 {
     
-    //public static Player Instance{get; private set;}
+    public static Player LocalInstance{get; private set;}
+    public static Action OnAnyPlayerSpawned;
     
-    
+    public static void ResetStaticData()
+    {
+        
+        OnAnyPlayerSpawned = null;
+    }
     
     
     [SerializeField] private float speed = 7f;
@@ -38,6 +43,23 @@ public class Player : NetworkBehaviour ,IKitchObjParent
     {
         //Instance = this;
     }
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+        {
+            LocalInstance = this;
+            OnAnyPlayerSpawned?.Invoke();
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsOwner && LocalInstance == this)
+        {
+            LocalInstance = null;
+        }
+    }
+
     private void Start()
     {
         GameInput.Instance.OnInteractAction += GameInput_OnInteractAction;
@@ -98,10 +120,10 @@ public class Player : NetworkBehaviour ,IKitchObjParent
                                             moveDir,
                                             moveDistance);
 
-        // 斜向移动被阻挡 → 尝试 X / Z 单轴移动
+        // 斜向移动被阻�?�?尝试 X / Z 单轴移动
         if (!canMove && moveDir != Vector3.zero)
         {
-            // X 轴
+            // X �?
             Vector3 moveDirX = new Vector3(moveDir.x, 0, 0);
             if (moveDir.x != 0 &&
                 !Physics.CapsuleCast(transform.position,
@@ -115,7 +137,7 @@ public class Player : NetworkBehaviour ,IKitchObjParent
             }
             else
             {
-                // Z 轴
+                // Z �?
                 Vector3 moveDirZ = new Vector3(0, 0, moveDir.z);
                 if (moveDir.z != 0 &&
                     !Physics.CapsuleCast(transform.position,
@@ -145,7 +167,7 @@ public class Player : NetworkBehaviour ,IKitchObjParent
             }
         }
 
-        // walking 状态
+        // walking 状�?
         isWalking = canMove && inputVector != Vector2.zero;
         if(isWalking)
         {
@@ -169,7 +191,7 @@ public class Player : NetworkBehaviour ,IKitchObjParent
         {
             if (raycastHit.transform.TryGetComponent(out BaseCounter baseCounter))
             {
-                // 命中柜台 → 始终选中它（如果不是当前选中的）
+                // 命中柜台 �?始终选中它（如果不是当前选中的）
                 if (baseCounter != selectedCounter)
                 {
                     SetSelectedCounter(baseCounter);
@@ -177,13 +199,13 @@ public class Player : NetworkBehaviour ,IKitchObjParent
             }
             else
             {
-                // 命中非柜台 → 清空选中
+                // 命中非柜�?�?清空选中
                 SetSelectedCounter(null);
             }
         }
         else
         {
-            // 射线没有打到任何东西 → 清空选中
+            // 射线没有打到任何东西 �?清空选中
             SetSelectedCounter(null);
         }
     }
@@ -204,10 +226,10 @@ public class Player : NetworkBehaviour ,IKitchObjParent
                                             moveDir,
                                             moveDistance);
 
-        // 斜向移动被阻挡 → 尝试 X / Z 单轴移动
+        // 斜向移动被阻�?�?尝试 X / Z 单轴移动
         if (!canMove && moveDir != Vector3.zero)
         {
-            // X 轴
+            // X �?
             Vector3 moveDirX = new Vector3(moveDir.x, 0, 0);
             if (moveDir.x != 0 &&
                 !Physics.CapsuleCast(transform.position,
@@ -221,7 +243,7 @@ public class Player : NetworkBehaviour ,IKitchObjParent
             }
             else
             {
-                // Z 轴
+                // Z �?
                 Vector3 moveDirZ = new Vector3(0, 0, moveDir.z);
                 if (moveDir.z != 0 &&
                     !Physics.CapsuleCast(transform.position,
@@ -251,7 +273,7 @@ public class Player : NetworkBehaviour ,IKitchObjParent
             }
         }
 
-        // walking 状态
+        // walking 状�?
         isWalking = canMove && inputVector != Vector2.zero;
         if(isWalking)
         {
@@ -290,5 +312,10 @@ public class Player : NetworkBehaviour ,IKitchObjParent
     public bool HasKitchenObj()
     {
         return kitchenObj != null;
+    }
+
+    public NetworkObject GetNetworkObject()
+    {
+        return NetworkObject;
     }
 }

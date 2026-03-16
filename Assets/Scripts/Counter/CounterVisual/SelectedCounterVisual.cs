@@ -1,17 +1,45 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.Experimental;
 using UnityEngine;
 
 public class SelectedCounterVisual : MonoBehaviour
 {
     [SerializeField] private BaseCounter baseCounter;
     [SerializeField] private GameObject[] visualGameObjectArray;
-    
+
     private void Start()
     {
-        //Player.Instance.OnSelectedCounterChanged += Player_OnSelectedCounterChanged;
+        Hide();
+
+        if (Player.LocalInstance != null)
+        {
+            Player.LocalInstance.OnSelectedCounterChanged += Player_OnSelectedCounterChanged;
+        }
+        else
+        {
+            Player.OnAnyPlayerSpawned += Player_OnAnyPlayerSpawned;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (Player.LocalInstance != null)
+        {
+            Player.LocalInstance.OnSelectedCounterChanged -= Player_OnSelectedCounterChanged;
+        }
+
+        Player.OnAnyPlayerSpawned -= Player_OnAnyPlayerSpawned;
+    }
+
+    private void Player_OnAnyPlayerSpawned()
+    {
+        if (Player.LocalInstance == null)
+        {
+            return;
+        }
+
+        Player.LocalInstance.OnSelectedCounterChanged -= Player_OnSelectedCounterChanged;
+        Player.LocalInstance.OnSelectedCounterChanged += Player_OnSelectedCounterChanged;
+        Player.OnAnyPlayerSpawned -= Player_OnAnyPlayerSpawned;
     }
 
     private void Player_OnSelectedCounterChanged(object sender, Player.OnSelectedCounterChangedEvent e)
@@ -25,19 +53,18 @@ public class SelectedCounterVisual : MonoBehaviour
             Hide();
         }
     }
-    
+
     public void Show()
     {
-        foreach (var go in visualGameObjectArray)
+        foreach (GameObject go in visualGameObjectArray)
         {
             go.SetActive(true);
         }
-       
     }
-    
+
     public void Hide()
     {
-        foreach (var go in visualGameObjectArray)
+        foreach (GameObject go in visualGameObjectArray)
         {
             go.SetActive(false);
         }

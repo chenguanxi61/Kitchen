@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class BaseCounter : MonoBehaviour,IKitchObjParent
+public class BaseCounter : NetworkBehaviour,IKitchObjParent
 {
     
     [SerializeField] protected GameObject TopPoint;
@@ -43,5 +44,10 @@ public class BaseCounter : MonoBehaviour,IKitchObjParent
     public bool HasKitchenObj()
     {
         return kitchenObj != null;
+    }
+
+    public NetworkObject GetNetworkObject()
+    {
+        return NetworkObject;
     }
 }

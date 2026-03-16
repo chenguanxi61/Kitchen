@@ -10,8 +10,9 @@ public class PlateKitchObj : KitchenObj
     private List<KitchenObjSO> plateKitchenObjSOList;// 盘子里装的东西列表
     public Action<KitchenObjSO> OnAddSomething;
 
-    public void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         plateKitchenObjSOList = new List<KitchenObjSO>();
     }
     //尝试往盘子是装东西

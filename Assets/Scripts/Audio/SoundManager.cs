@@ -24,7 +24,7 @@ public class SoundManager : MonoBehaviour
         //拿取东西
         //Player.Instance.OnPickedSomething += Player_OnPickedSomething;
         //玩家移动
-        //Player.Instance.OnMoving += Player_OnMoving;
+        Player.LocalInstance.OnMoving += Player_OnMoving;
         //物品放置
         BaseCounter.OnAnyObjectPlaced += BaseCounter_OnAnyObjectPlaced;
         //扔垃圾

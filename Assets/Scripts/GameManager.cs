@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
     private float waitingToStartTimer = 1f;
     private float countDownToStartTimer = 3f;
     private float gamePlayingTimer = 300f;
-    private float gamePlayingTimerMax = 30f;
+    private float gamePlayingTimerMax = 300f;
     private void Awake()
     {
         Instance = this;
@@ -32,8 +32,8 @@ public class GameManager : MonoBehaviour
     
     private void Start()
     {
-        //测试用直接进入游戏状态
-        state = State.CountdownToStart;
+        
+        state = State.WaitingToStart;
         OnStateChanged?.Invoke(state);
     }
 

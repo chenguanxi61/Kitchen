@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
+using Unity.Netcode;
 using UnityEngine;
 
 public class ContainerCounter : BaseCounter
@@ -13,10 +14,22 @@ public class ContainerCounter : BaseCounter
         {
             //玩家没拿着东西
             KitchenObj.SpawnKitchenObj(kitchenObjSO,player);
-            OnPLayerGetKitchenObj?.Invoke(this, EventArgs.Empty);
+            InteractServerRpc();
         }
+        
+        
       
     }
-    
+
+    [ServerRpc (RequireOwnership = false)]
+    private void InteractServerRpc()
+    {
+        InteractClientRpc();
+    }
+    [ClientRpc]
+    private void InteractClientRpc()
+    {
+        OnPLayerGetKitchenObj?.Invoke(this, EventArgs.Empty);
+    }
     
 }

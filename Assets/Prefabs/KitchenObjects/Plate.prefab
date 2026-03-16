@@ -136,7 +136,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6514309495520492720}
+  - component: {fileID: -7160041368148500927}
   - component: {fileID: -1057783818915157572}
+  - component: {fileID: 1800013475675523666}
   m_Layer: 0
   m_Name: Plate
   m_TagString: Untagged
@@ -162,6 +164,27 @@ Transform:
   - {fileID: 4783988650667982213}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 120, z: 0}
+--- !u!114 &-7160041368148500927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712680776459119884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 3402743590
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
 --- !u!114 &-1057783818915157572
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -182,6 +205,18 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fa78bce916bab214eb721b324f7709b4, type: 2}
   - {fileID: 11400000, guid: 842a9703ec6114749b2642dd870f9b19, type: 2}
   - {fileID: 11400000, guid: ab1d5c141c4a6d944ae49fdb29407314, type: 2}
+--- !u!114 &1800013475675523666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4712680776459119884}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 466bbcd0665980a40bdc7bd0d32f5252, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6036911730512270016
 GameObject:
   m_ObjectHideFlags: 0
@@ -542,10 +577,40 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5562250585590365652, guid: f283cffaf26067a4bbd42e46ca22b622,
+        type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 3553688916
+      objectReference: {fileID: 0}
+    - target: {fileID: 5667410642185168982, guid: f283cffaf26067a4bbd42e46ca22b622,
+        type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1468345644
+      objectReference: {fileID: 0}
     - target: {fileID: 6040633221439534940, guid: f283cffaf26067a4bbd42e46ca22b622,
         type: 3}
       propertyPath: m_Name
       value: PlateCompleteVisyal
+      objectReference: {fileID: 0}
+    - target: {fileID: 6150435531039841882, guid: f283cffaf26067a4bbd42e46ca22b622,
+        type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1540454825
+      objectReference: {fileID: 0}
+    - target: {fileID: 6646277049546804853, guid: f283cffaf26067a4bbd42e46ca22b622,
+        type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1918198246
+      objectReference: {fileID: 0}
+    - target: {fileID: 8425361449459635666, guid: f283cffaf26067a4bbd42e46ca22b622,
+        type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 210829936
+      objectReference: {fileID: 0}
+    - target: {fileID: 9211845463913999218, guid: f283cffaf26067a4bbd42e46ca22b622,
+        type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 142631191
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

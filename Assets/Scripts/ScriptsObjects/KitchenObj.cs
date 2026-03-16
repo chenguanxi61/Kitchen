@@ -1,13 +1,24 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
-public class KitchenObj : MonoBehaviour
+public class KitchenObj : NetworkBehaviour
 {
     [SerializeField] private KitchenObjSO kitchenObjSO;
     //判断谁拿到了自己
     private IKitchObjParent iKitchObjParent;
     
+    //转换
+    private FollowTransfrom followTransfrom;
+
+
+    protected virtual void Awake()
+    {
+        followTransfrom = GetComponent<FollowTransfrom>();
+    }
+
     public KitchenObjSO GetKitchenObjSO()
     {
         return kitchenObjSO;
@@ -15,6 +26,19 @@ public class KitchenObj : MonoBehaviour
     
     public void SetKitchenObjParent(IKitchObjParent newKitchenObjParent)
     {
+       SetKitchenObjParentServerRpc(newKitchenObjParent.GetNetworkObject());
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void SetKitchenObjParentServerRpc(NetworkObjectReference kitchenObjParentNetworkReference)
+    {
+        SetKitchenObjParentClientRpc(kitchenObjParentNetworkReference);
+    }
+    [ClientRpc]
+    private void SetKitchenObjParentClientRpc(NetworkObjectReference kitchenObjParentNetworkReference)
+    {
+        //拿到父物体
+        kitchenObjParentNetworkReference.TryGet(out NetworkObject kitchenObjParentNetworkObj);
+        IKitchObjParent newKitchenObjParent = kitchenObjParentNetworkObj.GetComponent<IKitchObjParent>();
         // 1. 清理旧桌台
         if (iKitchObjParent != null)
         {
@@ -34,11 +58,9 @@ public class KitchenObj : MonoBehaviour
         newKitchenObjParent.SetKitchenObj(this);
 
         // 5. 设置物体位置
-        transform.parent = newKitchenObjParent.GetTopPoint();
-        transform.localPosition = Vector3.zero;
+        followTransfrom.SetTargetTransfrom(newKitchenObjParent.GetTopPoint());
+
     }
-    
-    
 
     public IKitchObjParent GetKitchenObjParent()
     {
@@ -57,11 +79,10 @@ public class KitchenObj : MonoBehaviour
         Destroy(gameObject);
     }
     
-    public static KitchenObj SpawnKitchenObj(KitchenObjSO kitchenObjSO,IKitchObjParent kitchenObjParent)
+    public static void SpawnKitchenObj(KitchenObjSO kitchenObjSO,IKitchObjParent kitchenObjParent)
     {
-        Transform obj = Instantiate(kitchenObjSO.prefab);
-        obj.transform.GetComponent<KitchenObj>().SetKitchenObjParent(kitchenObjParent);
-        return obj.transform.GetComponent<KitchenObj>();
+        KitchGameMultiPlayer.Instance.SpawnKitchenObj(kitchenObjSO,kitchenObjParent);
+        
     }
     
     public bool TryGetPlate(out PlateKitchObj plateKitchObj)
