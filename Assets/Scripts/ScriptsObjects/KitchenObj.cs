@@ -73,12 +73,16 @@ public class KitchenObj : NetworkBehaviour
         // 1. 清理旧桌台
         if (iKitchObjParent != null)
         {
-            iKitchObjParent.ClearKitchenObj();
+            ClearKitchenObjOnParent();
         }
         // 2. 销毁物体
         Destroy(gameObject);
     }
-    
+
+    public void ClearKitchenObjOnParent()
+    {
+        iKitchObjParent.ClearKitchenObj();
+    }
     public static void SpawnKitchenObj(KitchenObjSO kitchenObjSO,IKitchObjParent kitchenObjParent)
     {
         KitchGameMultiPlayer.Instance.SpawnKitchenObj(kitchenObjSO,kitchenObjParent);
@@ -97,5 +101,11 @@ public class KitchenObj : NetworkBehaviour
             plateKitchObj = null;
             return false;
         }
+    }
+
+    public static void DestoryKitchenObj(KitchenObj kitchenObj)
+    {
+        //多人
+        KitchGameMultiPlayer.Instance.DestroyKitchenObj(kitchenObj);
     }
 }

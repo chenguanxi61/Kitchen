@@ -136,7 +136,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6514309495520492720}
-  - component: {fileID: -7160041368148500927}
+  - component: {fileID: 4891989045284387245}
   - component: {fileID: -1057783818915157572}
   - component: {fileID: 1800013475675523666}
   m_Layer: 0
@@ -164,7 +164,7 @@ Transform:
   - {fileID: 4783988650667982213}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 120, z: 0}
---- !u!114 &-7160041368148500927
+--- !u!114 &4891989045284387245
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -176,7 +176,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3402743590
+  GlobalObjectIdHash: 1250929937
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -580,12 +580,12 @@ PrefabInstance:
     - target: {fileID: 5562250585590365652, guid: f283cffaf26067a4bbd42e46ca22b622,
         type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 3553688916
+      value: 1250929937
       objectReference: {fileID: 0}
     - target: {fileID: 5667410642185168982, guid: f283cffaf26067a4bbd42e46ca22b622,
         type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 1468345644
+      value: 1250929937
       objectReference: {fileID: 0}
     - target: {fileID: 6040633221439534940, guid: f283cffaf26067a4bbd42e46ca22b622,
         type: 3}
@@ -595,22 +595,22 @@ PrefabInstance:
     - target: {fileID: 6150435531039841882, guid: f283cffaf26067a4bbd42e46ca22b622,
         type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 1540454825
+      value: 1250929937
       objectReference: {fileID: 0}
     - target: {fileID: 6646277049546804853, guid: f283cffaf26067a4bbd42e46ca22b622,
         type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 1918198246
+      value: 1250929937
       objectReference: {fileID: 0}
     - target: {fileID: 8425361449459635666, guid: f283cffaf26067a4bbd42e46ca22b622,
         type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 210829936
+      value: 1250929937
       objectReference: {fileID: 0}
     - target: {fileID: 9211845463913999218, guid: f283cffaf26067a4bbd42e46ca22b622,
         type: 3}
       propertyPath: GlobalObjectIdHash
-      value: 142631191
+      value: 1250929937
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

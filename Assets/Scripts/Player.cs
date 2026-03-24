@@ -120,10 +120,10 @@ public class Player : NetworkBehaviour ,IKitchObjParent
                                             moveDir,
                                             moveDistance);
 
-        // 斜向移动被阻�?�?尝试 X / Z 单轴移动
+        // 斜向移动被阻尝试 X / Z 单轴移动
         if (!canMove && moveDir != Vector3.zero)
         {
-            // X �?
+            // X 
             Vector3 moveDirX = new Vector3(moveDir.x, 0, 0);
             if (moveDir.x != 0 &&
                 !Physics.CapsuleCast(transform.position,
@@ -226,7 +226,7 @@ public class Player : NetworkBehaviour ,IKitchObjParent
                                             moveDir,
                                             moveDistance);
 
-        // 斜向移动被阻�?�?尝试 X / Z 单轴移动
+        // 斜向移动被阻尝试 X / Z 单轴移动
         if (!canMove && moveDir != Vector3.zero)
         {
             // X �?

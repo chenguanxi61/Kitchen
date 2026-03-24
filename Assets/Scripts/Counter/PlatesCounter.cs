@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -17,26 +18,51 @@ public class PlatesCounter : BaseCounter
 
     private void Update()
     {
+        if (!IsServer)
+        {
+            return;
+        }
         spawnPlateTimer += Time.deltaTime;
         if (spawnPlateTimer >= spawnPlateTimerMax)
         {
             spawnPlateTimer = 0f;
             if (plateSpawnedAmount < plateSpawnedAmountMax)
             {
-                plateSpawnedAmount++;
-                OnPlateSpawned?.Invoke();
+               SpawnPlateServerRpc();
             }
         }
     }
-    
+    [ServerRpc]
+    private void SpawnPlateServerRpc()
+    {
+        SpawnPlateClientRpc();
+    }
+    [ClientRpc]
+    private void SpawnPlateClientRpc()
+    {
+        plateSpawnedAmount++;
+        OnPlateSpawned?.Invoke();
+    }
     public override void Interact(Player player)
     {
         if (!player.HasKitchenObj()&&plateSpawnedAmount>0)
         {
             //玩家手上没盘子 拿起盘子
-            plateSpawnedAmount--;
+            
             KitchenObj.SpawnKitchenObj(plateKitchenObjSO, player);
-            OnPlateRemoved?.Invoke();
+            InteractServerRpc();
         }
+    }
+    
+    [ServerRpc (RequireOwnership = false)]
+    private void InteractServerRpc()
+    {
+        InteractClientRpc();
+    }
+    [ClientRpc]
+    private void InteractClientRpc()
+    {
+        plateSpawnedAmount--;
+        OnPlateSpawned?.Invoke();
     }
 }
