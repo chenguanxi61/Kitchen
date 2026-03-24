@@ -29,7 +29,6 @@ public class GameStartCountDownUI : MonoBehaviour
     private void Update()
     {
         Text.text = Math.Ceiling(GameManager.Instance.GetCountDownToStartTimer()).ToString();
-        Debug.Log(Text.text);
     }
 
     private void Show()

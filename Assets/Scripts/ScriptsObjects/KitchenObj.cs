@@ -1,18 +1,12 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
 public class KitchenObj : NetworkBehaviour
 {
     [SerializeField] private KitchenObjSO kitchenObjSO;
-    //判断谁拿到了自己
-    private IKitchObjParent iKitchObjParent;
-    
-    //转换
-    private FollowTransfrom followTransfrom;
 
+    private IKitchObjParent iKitchObjParent;
+    private FollowTransfrom followTransfrom;
 
     protected virtual void Awake()
     {
@@ -23,72 +17,81 @@ public class KitchenObj : NetworkBehaviour
     {
         return kitchenObjSO;
     }
-    
+
     public void SetKitchenObjParent(IKitchObjParent newKitchenObjParent)
     {
-       SetKitchenObjParentServerRpc(newKitchenObjParent.GetNetworkObject());
+        SetKitchenObjParentServerRpc(newKitchenObjParent.GetNetworkObject());
     }
+
     [ServerRpc(RequireOwnership = false)]
     private void SetKitchenObjParentServerRpc(NetworkObjectReference kitchenObjParentNetworkReference)
     {
         SetKitchenObjParentClientRpc(kitchenObjParentNetworkReference);
     }
+
     [ClientRpc]
     private void SetKitchenObjParentClientRpc(NetworkObjectReference kitchenObjParentNetworkReference)
     {
-        //拿到父物体
         kitchenObjParentNetworkReference.TryGet(out NetworkObject kitchenObjParentNetworkObj);
         IKitchObjParent newKitchenObjParent = kitchenObjParentNetworkObj.GetComponent<IKitchObjParent>();
-        // 1. 清理旧桌台
+
         if (iKitchObjParent != null)
         {
             iKitchObjParent.ClearKitchenObj();
         }
 
-        // 2. 切换到新桌台
         iKitchObjParent = newKitchenObjParent;
 
-        // 3. 新桌台不应当有 KitchenObj
         if (newKitchenObjParent.HasKitchenObj())
         {
-            Debug.LogError("新的父物体已经有物品了！");
+            Debug.LogError("The new kitchen object parent already has a kitchen object.");
         }
 
-        // 4. 给新桌台赋值
         newKitchenObjParent.SetKitchenObj(this);
-
-        // 5. 设置物体位置
         followTransfrom.SetTargetTransfrom(newKitchenObjParent.GetTopPoint());
-
     }
 
     public IKitchObjParent GetKitchenObjParent()
     {
         return iKitchObjParent;
     }
-    
-    
+
     public void DestroySelf()
     {
-        // 1. 清理旧桌台
         if (iKitchObjParent != null)
         {
             ClearKitchenObjOnParent();
         }
-        // 2. 销毁物体
-        Destroy(gameObject);
+
+        if (NetworkObject != null && NetworkObject.IsSpawned)
+        {
+            if (IsServer)
+            {
+                NetworkObject.Despawn(true);
+            }
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     public void ClearKitchenObjOnParent()
     {
+        if (iKitchObjParent == null)
+        {
+            return;
+        }
+
         iKitchObjParent.ClearKitchenObj();
+        iKitchObjParent = null;
     }
-    public static void SpawnKitchenObj(KitchenObjSO kitchenObjSO,IKitchObjParent kitchenObjParent)
+
+    public static void SpawnKitchenObj(KitchenObjSO kitchenObjSO, IKitchObjParent kitchenObjParent)
     {
-        KitchGameMultiPlayer.Instance.SpawnKitchenObj(kitchenObjSO,kitchenObjParent);
-        
+        KitchGameMultiPlayer.Instance.SpawnKitchenObj(kitchenObjSO, kitchenObjParent);
     }
-    
+
     public bool TryGetPlate(out PlateKitchObj plateKitchObj)
     {
         if (this is PlateKitchObj)
@@ -96,16 +99,13 @@ public class KitchenObj : NetworkBehaviour
             plateKitchObj = this as PlateKitchObj;
             return true;
         }
-        else
-        {
-            plateKitchObj = null;
-            return false;
-        }
+
+        plateKitchObj = null;
+        return false;
     }
 
     public static void DestoryKitchenObj(KitchenObj kitchenObj)
     {
-        //多人
         KitchGameMultiPlayer.Instance.DestroyKitchenObj(kitchenObj);
     }
 }

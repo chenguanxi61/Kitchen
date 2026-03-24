@@ -14,7 +14,21 @@ public class StoveCounterSound : MonoBehaviour
     }
     private void Start()
     {
+        if (stoveCounter == null)
+        {
+            return;
+        }
+
         stoveCounter.OnStateChanged += StoveCounter_OnStateChanged;
+        StoveCounter_OnStateChanged(stoveCounter.GetCurrentState());
+    }
+
+    private void OnDestroy()
+    {
+        if (stoveCounter != null)
+        {
+            stoveCounter.OnStateChanged -= StoveCounter_OnStateChanged;
+        }
     }
     
     private void StoveCounter_OnStateChanged(StoveCounter.State e)

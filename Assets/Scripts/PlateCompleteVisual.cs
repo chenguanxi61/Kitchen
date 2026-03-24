@@ -1,43 +1,70 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
+
 public class PlateCompleteVisual : MonoBehaviour
-{ 
+{
     [Serializable]
-   public struct KitchenObjectSO_Hamburger//对应汉堡里面 obj和SO
+    public struct KitchenObjectSO_Hamburger
     {
         public KitchenObjSO kitchenObjSO;
         public GameObject gameObject;
     }
-    
+
     [SerializeField] private PlateKitchObj plateKitchObj;
     [SerializeField] private List<KitchenObjectSO_Hamburger> kitchenObjectSO_HamburgerList;
 
-    public void Awake()
-    {
-        
-    }
-
     private void Start()
     {
-        plateKitchObj.OnAddSomething += PlateKitchObj_OnAddSomething;
-        foreach (KitchenObjectSO_Hamburger so in kitchenObjectSO_HamburgerList)
+        if (plateKitchObj == null)
         {
-            so.gameObject.SetActive(false);
+            return;
+        }
+
+        plateKitchObj.OnAddSomething += PlateKitchObj_OnAddSomething;
+        ResetVisual();
+        RefreshVisual();
+    }
+
+    private void OnDestroy()
+    {
+        if (plateKitchObj != null)
+        {
+            plateKitchObj.OnAddSomething -= PlateKitchObj_OnAddSomething;
         }
     }
-    
+
     private void PlateKitchObj_OnAddSomething(KitchenObjSO kitchenObjSO)
     {
-        foreach (KitchenObjectSO_Hamburger so in kitchenObjectSO_HamburgerList)
+        RefreshVisual();
+    }
+
+    private void ResetVisual()
+    {
+        foreach (KitchenObjectSO_Hamburger visualEntry in kitchenObjectSO_HamburgerList)
         {
-            if (so.kitchenObjSO == kitchenObjSO)
+            visualEntry.gameObject.SetActive(false);
+        }
+    }
+
+    private void RefreshVisual()
+    {
+        if (plateKitchObj == null)
+        {
+            return;
+        }
+
+        ResetVisual();
+
+        foreach (KitchenObjSO kitchenObjSO in plateKitchObj.GetKitchenObjSOList())
+        {
+            foreach (KitchenObjectSO_Hamburger visualEntry in kitchenObjectSO_HamburgerList)
             {
-                so.gameObject.SetActive(true);
+                if (visualEntry.kitchenObjSO == kitchenObjSO)
+                {
+                    visualEntry.gameObject.SetActive(true);
+                }
             }
         }
     }
-
-   
 }

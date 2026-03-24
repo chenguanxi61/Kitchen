@@ -36,7 +36,7 @@ public class ClearCounter : BaseCounter
        {
            if (plate.TryAddSomething(GetKitchenObj().GetKitchenObjSO()))
            {
-               GetKitchenObj().DestroySelf();
+               KitchenObj.DestoryKitchenObj(GetKitchenObj());
            }
        }
        //情况4双方都有东西玩家手里不是盘子 桌台上是盘子
@@ -44,7 +44,7 @@ public class ClearCounter : BaseCounter
        {
            if (plate.TryAddSomething(player.GetKitchenObj().GetKitchenObjSO()))
            {
-               player.GetKitchenObj().DestroySelf();
+               KitchenObj.DestoryKitchenObj(player.GetKitchenObj());
            }
        }
        

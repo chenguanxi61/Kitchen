@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlateIconUI : MonoBehaviour
@@ -15,7 +12,21 @@ public class PlateIconUI : MonoBehaviour
     
     void Start()
     {
+        if (plateKitchObj == null)
+        {
+            return;
+        }
+
         plateKitchObj.OnAddSomething += PlateKitchObj_OnAddSomething;
+        UpdateVisual();
+    }
+
+    private void OnDestroy()
+    {
+        if (plateKitchObj != null)
+        {
+            plateKitchObj.OnAddSomething -= PlateKitchObj_OnAddSomething;
+        }
     }
 
     private void PlateKitchObj_OnAddSomething(KitchenObjSO kitchenObjSO)
@@ -25,6 +36,11 @@ public class PlateIconUI : MonoBehaviour
 
     private void UpdateVisual()
     {
+        if (plateKitchObj == null)
+        {
+            return;
+        }
+
         foreach (Transform child in transform)
         {
             if(child==iconTemplate) continue;

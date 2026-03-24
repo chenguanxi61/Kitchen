@@ -1,16 +1,15 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class StoveCounter : BaseCounter,IHasProgressBar
+public class StoveCounter : BaseCounter, IHasProgressBar
 {
-    public event UnityAction<float> OnProgressChanged; 
-    public  UnityAction<State> OnStateChanged;
-    
+    public event UnityAction<float> OnProgressChanged;
+    public UnityAction<State> OnStateChanged;
+
     public static Action<Vector3> OnAnyObjectFried;
-    //状态机状态
+
     public enum State
     {
         Idle,
@@ -18,156 +17,219 @@ public class StoveCounter : BaseCounter,IHasProgressBar
         Fryed,
         Burned,
     }
+
     [SerializeField] private FryRecipeSO[] fryRecipeSOArray;
     [SerializeField] private BurningRecipeSO[] burningRecipeSOArray;
-    private float fryingTimer;//煎的时间
+
+    private readonly NetworkVariable<int> stateNetworkVariable = new NetworkVariable<int>((int)State.Idle);
+    private readonly NetworkVariable<float> progressNetworkVariable = new NetworkVariable<float>(0f);
+
+    private float fryingTimer;
     private FryRecipeSO fryRecipeSO;
-    private float burningTime;//烧焦所需的时间
+    private float burningTime;
     private BurningRecipeSO burningRecipeSO;
-    private State state;
-    
-    
-    private void Start()
+
+    public override void OnNetworkSpawn()
     {
-        state = State.Idle;
+        stateNetworkVariable.OnValueChanged += StateNetworkVariable_OnValueChanged;
+        progressNetworkVariable.OnValueChanged += ProgressNetworkVariable_OnValueChanged;
+
+        OnStateChanged?.Invoke(GetState());
+        OnProgressChanged?.Invoke(progressNetworkVariable.Value);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        stateNetworkVariable.OnValueChanged -= StateNetworkVariable_OnValueChanged;
+        progressNetworkVariable.OnValueChanged -= ProgressNetworkVariable_OnValueChanged;
     }
 
     private void Update()
     {
-        if (HasKitchenObj())
+        if (!IsServer || !HasKitchenObj())
         {
-            
-            switch (state)
-            {
-                case State.Idle:
-                    break;
-                case State.Frying:
-                    fryingTimer += Time.deltaTime;
-                    OnProgressChanged?.Invoke(fryingTimer / fryRecipeSO.fryTimerMax);
-                    if (fryingTimer > fryRecipeSO.fryTimerMax)
-                    {
-                        //如果当前烹饪时间大于最大烹饪时间，生成煎好的食物
-                        GetKitchenObj().DestroySelf();
-                        KitchenObj.SpawnKitchenObj(fryRecipeSO.output, this);
-                        
-                        state = State.Fryed;
-                        burningTime = 0f;
-                        
-                        
-                        //拿到台子上物品的烧焦配方SO
-                        burningRecipeSO = GetBurningRecipeSOWithInput(GetKitchenObj().GetKitchenObjSO());
-                        
-                        OnStateChanged?.Invoke(state);
-                        OnProgressChanged?.Invoke(0f);
-                        
-                    }
-                    break;
-                case State.Fryed:
-                    burningTime += Time.deltaTime;
-                    OnProgressChanged?.Invoke(burningTime / burningRecipeSO.burningTimerMax);
-                    if (burningTime > burningRecipeSO.burningTimerMax)
-                    {
-                        GetKitchenObj().DestroySelf();
-                        KitchenObj.SpawnKitchenObj(burningRecipeSO.output, this);
-                        state = State.Burned;
-                        OnStateChanged?.Invoke(state);
-                        OnProgressChanged?.Invoke(0f);
-                        
-                    }
-                    break;
-                case State.Burned:
-                    break;
-            }
-           
-        }
-        
-    }
-    
-    public override void Interact(Player player)
-    {
-        // 灶空：接收可烹饪食材
-        if (!HasKitchenObj())
-        {
-            if (player.HasKitchenObj())
-            {
-                KitchenObjSO input = player.GetKitchenObj().GetKitchenObjSO();
-                if (GetFryRecipeSOWithInput(input) != null)   // 一次查找
-                {
-                    player.GetKitchenObj().SetKitchenObjParent(this);
-                    
-                    fryRecipeSO= GetFryRecipeSOWithInput(GetKitchenObj().GetKitchenObjSO());
-                    
-                    state = State.Frying;
-                    OnStateChanged?.Invoke(state);
-                    fryingTimer = 0;
-                }
-            }
             return;
         }
 
-        // 情况 2：柜台有东西 → 仅当玩家空手时才递给他
-        if (!player.HasKitchenObj())
+        switch (GetState())
         {
-            GetKitchenObj().SetKitchenObjParent(player);
-            state = State.Idle;
-            OnStateChanged?.Invoke(state);
-            OnProgressChanged?.Invoke(0f);
-         
-        }
-        // 情况 3：柜台有东西，玩家也有东西 → 尝试把柜台的东西放到玩家手上的盘子里（如果玩家拿着盘子的话）
-        if (player.GetKitchenObj().TryGetPlate(out PlateKitchObj plateKitchObj))
-        {
-            //玩家拿着盘子
-            if(plateKitchObj.TryAddSomething(GetKitchenObj().GetKitchenObjSO()))
-            {
-                state = State.Idle;
-                OnStateChanged?.Invoke(state);
-                OnProgressChanged?.Invoke(0f);
-                GetKitchenObj().DestroySelf();
-            }
-                    
+            case State.Idle:
+                break;
+            case State.Frying:
+                fryingTimer += Time.deltaTime;
+                SetProgress(fryingTimer / fryRecipeSO.fryTimerMax);
+
+                if (fryingTimer > fryRecipeSO.fryTimerMax)
+                {
+                    KitchenObjSO cookedKitchenObjSO = fryRecipeSO.output;
+                    KitchenObj.DestoryKitchenObj(GetKitchenObj());
+                    KitchenObj.SpawnKitchenObj(cookedKitchenObjSO, this);
+
+                    burningTime = 0f;
+                    burningRecipeSO = GetBurningRecipeSOWithInput(cookedKitchenObjSO);
+                    SetState(State.Fryed);
+                    SetProgress(0f);
+                }
+                break;
+            case State.Fryed:
+                burningTime += Time.deltaTime;
+                SetProgress(burningTime / burningRecipeSO.burningTimerMax);
+
+                if (burningTime > burningRecipeSO.burningTimerMax)
+                {
+                    KitchenObj.DestoryKitchenObj(GetKitchenObj());
+                    KitchenObj.SpawnKitchenObj(burningRecipeSO.output, this);
+                    SetState(State.Burned);
+                    SetProgress(0f);
+                }
+                break;
+            case State.Burned:
+                break;
         }
     }
 
-    // 判断是否有这个SO配方
-    private bool HasFryRecipeWithInput(KitchenObjSO input)
+    public override void Interact(Player player)
     {
-        FryRecipeSO fryRecipeSO = GetFryRecipeSOWithInput(input);
-        return fryRecipeSO != null;
-        
-    }
-    // 根据输入食材获取输出食材
-    private KitchenObjSO GetOutputForInput(KitchenObjSO input)
-    {
-        FryRecipeSO fryRecipeSO = GetFryRecipeSOWithInput(input);
-        if(fryRecipeSO != null)
+        if (IsServer)
         {
-            return fryRecipeSO.output;
+            InteractInternal(player);
         }
-        return null;
+        else
+        {
+            InteractServerRpc(player.NetworkObject);
+        }
     }
-    //拿到配方SO
+
+    [ServerRpc(RequireOwnership = false)]
+    private void InteractServerRpc(NetworkObjectReference playerNetworkObjectReference)
+    {
+        if (!playerNetworkObjectReference.TryGet(out NetworkObject playerNetworkObject))
+        {
+            return;
+        }
+
+        Player player = playerNetworkObject.GetComponent<Player>();
+
+        if (player == null)
+        {
+            return;
+        }
+
+        InteractInternal(player);
+    }
+
+    private void InteractInternal(Player player)
+    {
+        if (!HasKitchenObj())
+        {
+            if (!player.HasKitchenObj())
+            {
+                return;
+            }
+
+            KitchenObjSO input = player.GetKitchenObj().GetKitchenObjSO();
+            FryRecipeSO matchedRecipeSO = GetFryRecipeSOWithInput(input);
+
+            if (matchedRecipeSO == null)
+            {
+                return;
+            }
+
+            player.GetKitchenObj().SetKitchenObjParent(this);
+            fryRecipeSO = matchedRecipeSO;
+            fryingTimer = 0f;
+            burningTime = 0f;
+            burningRecipeSO = null;
+            SetState(State.Frying);
+            SetProgress(0f);
+            return;
+        }
+
+        if (!player.HasKitchenObj())
+        {
+            GetKitchenObj().SetKitchenObjParent(player);
+            ResetStove();
+            return;
+        }
+
+        if (player.GetKitchenObj().TryGetPlate(out PlateKitchObj plateKitchObj))
+        {
+            if (plateKitchObj.TryAddSomething(GetKitchenObj().GetKitchenObjSO()))
+            {
+                KitchenObj.DestoryKitchenObj(GetKitchenObj());
+                ResetStove();
+            }
+        }
+    }
+
+    private void ResetStove()
+    {
+        fryingTimer = 0f;
+        burningTime = 0f;
+        fryRecipeSO = null;
+        burningRecipeSO = null;
+        SetState(State.Idle);
+        SetProgress(0f);
+    }
+
+    private void SetState(State state)
+    {
+        stateNetworkVariable.Value = (int)state;
+    }
+
+    private State GetState()
+    {
+        return (State)stateNetworkVariable.Value;
+    }
+
+    public State GetCurrentState()
+    {
+        return GetState();
+    }
+
+    public float GetCurrentProgress()
+    {
+        return progressNetworkVariable.Value;
+    }
+
+    private void SetProgress(float progress)
+    {
+        progressNetworkVariable.Value = Mathf.Clamp01(progress);
+    }
+
+    private void StateNetworkVariable_OnValueChanged(int previousValue, int newValue)
+    {
+        OnStateChanged?.Invoke((State)newValue);
+    }
+
+    private void ProgressNetworkVariable_OnValueChanged(float previousValue, float newValue)
+    {
+        OnProgressChanged?.Invoke(newValue);
+    }
+
     private FryRecipeSO GetFryRecipeSOWithInput(KitchenObjSO input)
     {
-        foreach(FryRecipeSO fryRecipeSO in fryRecipeSOArray)
+        foreach (FryRecipeSO currentFryRecipeSO in fryRecipeSOArray)
         {
-            if(fryRecipeSO.input == input)
+            if (currentFryRecipeSO.input == input)
             {
-                return fryRecipeSO;
+                return currentFryRecipeSO;
             }
         }
+
         return null;
     }
-    //拿到烧焦配方SO
+
     private BurningRecipeSO GetBurningRecipeSOWithInput(KitchenObjSO input)
     {
-        foreach(BurningRecipeSO burningRecipeSO in burningRecipeSOArray)
+        foreach (BurningRecipeSO currentBurningRecipeSO in burningRecipeSOArray)
         {
-            if(burningRecipeSO.input == input)
+            if (currentBurningRecipeSO.input == input)
             {
-                return burningRecipeSO;
+                return currentBurningRecipeSO;
             }
         }
+
         return null;
     }
 }

@@ -43,7 +43,7 @@ public class CuttingCounter : BaseCounter, IHasProgressBar
          //玩家拿着盘子
          if(plateKitchObj.TryAddSomething(GetKitchenObj().GetKitchenObjSO()))
          {
-            GetKitchenObj().DestroySelf();
+            KitchenObj.DestoryKitchenObj(GetKitchenObj());
          }
                     
       }
@@ -60,7 +60,7 @@ public class CuttingCounter : BaseCounter, IHasProgressBar
          if (cuttingProgress >= recipe.cuttingProgressMax)
          {
             KitchenObjSO outputKitchenObj = GetCuttingObjSO(GetKitchenObj().GetKitchenObjSO());
-            GetKitchenObj().DestroySelf();
+            KitchenObj.DestoryKitchenObj(GetKitchenObj());
             KitchenObj.SpawnKitchenObj(outputKitchenObj,this);
          }
          

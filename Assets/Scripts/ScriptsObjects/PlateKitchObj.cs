@@ -1,38 +1,100 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Events;
 
 public class PlateKitchObj : KitchenObj
 {
-    [SerializeField] private List<KitchenObjSO> validKitchenObjSOList;//  盘子里可以装的东西列表
-    private List<KitchenObjSO> plateKitchenObjSOList;// 盘子里装的东西列表
+    [SerializeField] private List<KitchenObjSO> validKitchenObjSOList;
+
     public Action<KitchenObjSO> OnAddSomething;
+
+    private NetworkList<int> plateKitchenObjIndexList;
 
     protected override void Awake()
     {
         base.Awake();
-        plateKitchenObjSOList = new List<KitchenObjSO>();
+        plateKitchenObjIndexList = new NetworkList<int>();
     }
-    //尝试往盘子是装东西
+
+    public override void OnNetworkSpawn()
+    {
+        plateKitchenObjIndexList.OnListChanged += PlateKitchenObjIndexList_OnListChanged;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        plateKitchenObjIndexList.OnListChanged -= PlateKitchenObjIndexList_OnListChanged;
+    }
+
     public bool TryAddSomething(KitchenObjSO kitchenObjSO)
     {
-        if(!validKitchenObjSOList.Contains(kitchenObjSO))
+        if (!validKitchenObjSOList.Contains(kitchenObjSO))
         {
             return false;
         }
-        if (plateKitchenObjSOList.Contains(kitchenObjSO))
+
+        if (ContainsKitchenObj(kitchenObjSO))
         {
             return false;
         }
-        plateKitchenObjSOList.Add(kitchenObjSO);
-        OnAddSomething?.Invoke(kitchenObjSO);
-        return true; 
+
+        int kitchenObjIndex = KitchGameMultiPlayer.Instance.GetKitchenObjIndex(kitchenObjSO);
+        AddKitchenObjServerRpc(kitchenObjIndex);
+        return true;
     }
-    
+
     public List<KitchenObjSO> GetKitchenObjSOList()
     {
-        return plateKitchenObjSOList;
+        List<KitchenObjSO> kitchenObjSOList = new List<KitchenObjSO>();
+
+        foreach (int kitchenObjIndex in plateKitchenObjIndexList)
+        {
+            kitchenObjSOList.Add(KitchGameMultiPlayer.Instance.GetKitchenObjByIndex(kitchenObjIndex));
+        }
+
+        return kitchenObjSOList;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void AddKitchenObjServerRpc(int kitchenObjIndex)
+    {
+        KitchenObjSO kitchenObjSO = KitchGameMultiPlayer.Instance.GetKitchenObjByIndex(kitchenObjIndex);
+
+        if (!validKitchenObjSOList.Contains(kitchenObjSO))
+        {
+            return;
+        }
+
+        if (ContainsKitchenObj(kitchenObjSO))
+        {
+            return;
+        }
+
+        plateKitchenObjIndexList.Add(kitchenObjIndex);
+    }
+
+    private bool ContainsKitchenObj(KitchenObjSO kitchenObjSO)
+    {
+        foreach (int kitchenObjIndex in plateKitchenObjIndexList)
+        {
+            if (KitchGameMultiPlayer.Instance.GetKitchenObjByIndex(kitchenObjIndex) == kitchenObjSO)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void PlateKitchenObjIndexList_OnListChanged(NetworkListEvent<int> changeEvent)
+    {
+        if (changeEvent.Type != NetworkListEvent<int>.EventType.Add)
+        {
+            return;
+        }
+
+        KitchenObjSO kitchenObjSO = KitchGameMultiPlayer.Instance.GetKitchenObjByIndex(changeEvent.Value);
+        OnAddSomething?.Invoke(kitchenObjSO);
     }
 }
