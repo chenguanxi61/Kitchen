@@ -9,6 +9,7 @@ public class ProgressBarUI : MonoBehaviour
     
     [SerializeField]private GameObject progressBarGameObject;
     private IHasProgressBar hasProgressBar;
+
     private void Start()
     {
         hasProgressBar = progressBarGameObject.GetComponent<IHasProgressBar>();
@@ -16,10 +17,19 @@ public class ProgressBarUI : MonoBehaviour
         barImage.fillAmount = 0f;
         hideProgressBar();
     }
+
+    private void OnDestroy()
+    {
+        if (hasProgressBar != null)
+        {
+            hasProgressBar.OnProgressChanged -= CuttingCounter_OnProgressChanged;
+        }
+    }
+
     private void CuttingCounter_OnProgressChanged(float progress)
     {
         barImage.fillAmount = progress;
-        if(progress == 0f||progress==1f)
+        if (progress <= 0f || progress >= 1f)
         {
             hideProgressBar();
         }
