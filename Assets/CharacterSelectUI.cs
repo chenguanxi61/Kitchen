@@ -11,10 +11,13 @@ public class CharacterSelectUI : MonoBehaviour
 
     private void Awake()
     {
-        mainMenuButton.onClick.AddListener((() => 
-                NetworkManager.Singleton.Shutdown()));
+        mainMenuButton.onClick.AddListener(() =>
+        {
+            NetworkManager.Singleton.Shutdown();
+            Loader.Load(Loader.Scene.MainMenu);
+        });
         
-        Loader.Load(Loader.Scene.MainMenu);
+        
 
         readyButton.onClick.AddListener((() =>
             KitchGameMultiPlayer.Instance.SetPlayerReady()));
