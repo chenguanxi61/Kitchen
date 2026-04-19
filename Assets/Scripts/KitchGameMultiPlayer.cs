@@ -41,6 +41,7 @@ public class KitchGameMultiPlayer : NetworkBehaviour
 
     private void OnListChange(NetworkListEvent<PlayerData> changeEvent)
     {
+        SyncPlayerColorCacheFromNetworkList();
         OnPlayerDataNetWorkListChanged?.Invoke();
     }
 
@@ -149,12 +150,14 @@ public class KitchGameMultiPlayer : NetworkBehaviour
     public void SetPlayerColor(Color color)
     {
         Color32 color32 = color;
+        PreviewLocalPlayerColor(color32);
         SetPlayerColorServerRpc(color32.r, color32.g, color32.b);
     }
 
     public void SetPlayerColorByIndex(int colorIndex)
     {
         Color32 color = GetPlayerColor(colorIndex);
+        PreviewLocalPlayerColor(color);
         SetPlayerColorServerRpc(color.r, color.g, color.b);
     }
 
@@ -176,14 +179,20 @@ public class KitchGameMultiPlayer : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void SetPlayerColorServerRpc(byte r, byte g, byte b, ServerRpcParams serverRpcParams = default)
     {
+        // 通过 ServerRpc 拿到实际发起颜色修改请求的客户端。
         ulong senderClientId = serverRpcParams.Receive.SenderClientId;
+
+        // 颜色由服务器统一判重，避免多个客户端本地判断不一致。
         if (IsColorUsedByOtherClient(r, g, b, senderClientId))
         {
             return;
         }
 
+        // 修改服务器上的玩家颜色数据，后续会通过同步逻辑刷新所有客户端显示。
         SetPlayerDataColor(senderClientId, r, g, b);
     }
+
+    
 
     private void CheckAllPlayersReady()
     {
@@ -350,6 +359,11 @@ public class KitchGameMultiPlayer : NetworkBehaviour
 
     public Color GetPlayerColor(ulong clientId)
     {
+        if (playerColorCacheDictionary != null && playerColorCacheDictionary.TryGetValue(clientId, out Color32 cachedColor))
+        {
+            return cachedColor;
+        }
+
         for (int i = 0; i < playerDataNetworkList.Count; i++)
         {
             PlayerData playerData = playerDataNetworkList[i];
@@ -357,11 +371,6 @@ public class KitchGameMultiPlayer : NetworkBehaviour
             {
                 return new Color32(playerData.colorR, playerData.colorG, playerData.colorB, 255);
             }
-        }
-
-        if (playerColorCacheDictionary != null && playerColorCacheDictionary.TryGetValue(clientId, out Color32 cachedColor))
-        {
-            return cachedColor;
         }
 
         return Color.white;
@@ -377,6 +386,33 @@ public class KitchGameMultiPlayer : NetworkBehaviour
 
         clientId = playerDataNetworkList[playerIndex].clientId;
         return true;
+    }
+
+    public bool TryGetPlayerIndexByClientId(ulong clientId, out int playerIndex)
+    {
+        for (int i = 0; i < playerDataNetworkList.Count; i++)
+        {
+            if (playerDataNetworkList[i].clientId == clientId)
+            {
+                playerIndex = i;
+                return true;
+            }
+        }
+
+        playerIndex = -1;
+        return false;
+    }
+
+    public bool TryGetLocalPlayerIndex(out int playerIndex)
+    {
+        playerIndex = -1;
+
+        if (NetworkManager.Singleton == null)
+        {
+            return false;
+        }
+
+        return TryGetPlayerIndexByClientId(NetworkManager.Singleton.LocalClientId, out playerIndex);
     }
 
     public bool IsColorIndexAvailableForClient(int colorIndex, ulong clientId)
@@ -493,6 +529,18 @@ public class KitchGameMultiPlayer : NetworkBehaviour
         return DEFAULT_PLAYER_COLORS[fallbackIndex];
     }
 
+    private void PreviewLocalPlayerColor(Color32 color)
+    {
+        if (NetworkManager.Singleton == null)
+        {
+            return;
+        }
+
+        ulong localClientId = NetworkManager.Singleton.LocalClientId;
+        playerColorCacheDictionary[localClientId] = color;
+        OnPlayerDataNetWorkListChanged?.Invoke();
+    }
+
     private void SetPlayerDataColor(ulong clientId, byte r, byte g, byte b)
     {
         if (!NetworkManager.Singleton.IsServer)
@@ -545,5 +593,27 @@ public class KitchGameMultiPlayer : NetworkBehaviour
         }
 
         return false;
+    }
+
+    private void SyncPlayerColorCacheFromNetworkList()
+    {
+        if (playerColorCacheDictionary == null)
+        {
+            playerColorCacheDictionary = new Dictionary<ulong, Color32>();
+        }
+
+        List<ulong> staleClientIdList = new List<ulong>(playerColorCacheDictionary.Keys);
+        for (int i = 0; i < playerDataNetworkList.Count; i++)
+        {
+            PlayerData playerData = playerDataNetworkList[i];
+            playerColorCacheDictionary[playerData.clientId] =
+                new Color32(playerData.colorR, playerData.colorG, playerData.colorB, 255);
+            staleClientIdList.Remove(playerData.clientId);
+        }
+
+        foreach (ulong staleClientId in staleClientIdList)
+        {
+            playerColorCacheDictionary.Remove(staleClientId);
+        }
     }
 }

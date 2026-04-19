@@ -86,7 +86,8 @@ public class CharacterColorsSelectUI : MonoBehaviour
             return;
         }
 
-        Color currentColor = KitchGameMultiPlayer.Instance.GetPlayerColor(Unity.Netcode.NetworkManager.Singleton.LocalClientId);
+        ulong localClientId = Unity.Netcode.NetworkManager.Singleton.LocalClientId;
+        Color currentColor = KitchGameMultiPlayer.Instance.GetPlayerColor(localClientId);
         Color32 currentColor32 = currentColor;
 
         for (int i = 0; i < colorButtonArray.Length; i++)
