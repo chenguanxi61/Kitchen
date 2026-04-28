@@ -7,6 +7,8 @@
 [Bb]uilds/
 _Build/
 MemoryCaptures/
+output/
+docs/
 
 # IDE
 .vscode/

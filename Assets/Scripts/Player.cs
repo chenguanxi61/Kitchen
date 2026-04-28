@@ -191,7 +191,6 @@ public class Player : NetworkBehaviour ,IKitchObjParent
         {
             if (raycastHit.transform.TryGetComponent(out BaseCounter baseCounter))
             {
-                // 命中柜台 �?始终选中它（如果不是当前选中的）
                 if (baseCounter != selectedCounter)
                 {
                     SetSelectedCounter(baseCounter);
@@ -199,13 +198,12 @@ public class Player : NetworkBehaviour ,IKitchObjParent
             }
             else
             {
-                // 命中非柜�?�?清空选中
                 SetSelectedCounter(null);
             }
         }
         else
         {
-            // 射线没有打到任何东西 �?清空选中
+            // 射线没有打到任何东西 清空选中
             SetSelectedCounter(null);
         }
     }
@@ -229,7 +227,7 @@ public class Player : NetworkBehaviour ,IKitchObjParent
         // 斜向移动被阻尝试 X / Z 单轴移动
         if (!canMove && moveDir != Vector3.zero)
         {
-            // X �?
+            // X 
             Vector3 moveDirX = new Vector3(moveDir.x, 0, 0);
             if (moveDir.x != 0 &&
                 !Physics.CapsuleCast(transform.position,
@@ -243,7 +241,6 @@ public class Player : NetworkBehaviour ,IKitchObjParent
             }
             else
             {
-                // Z �?
                 Vector3 moveDirZ = new Vector3(0, 0, moveDir.z);
                 if (moveDir.z != 0 &&
                     !Physics.CapsuleCast(transform.position,
@@ -273,7 +270,7 @@ public class Player : NetworkBehaviour ,IKitchObjParent
             }
         }
 
-        // walking 状�?
+        // walking 
         isWalking = canMove && inputVector != Vector2.zero;
         if(isWalking)
         {
