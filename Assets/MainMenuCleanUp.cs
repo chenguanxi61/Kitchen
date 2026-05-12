@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -12,10 +9,20 @@ public class MainMenuCleanUp : MonoBehaviour
         {
             Destroy(NetworkManager.Singleton.gameObject);
         }
-        
-        if(GameManager.Instance!=null)
+
+        if (GameManager.Instance != null)
         {
-            Destroy(GameManager.Instance);
+            Destroy(GameManager.Instance.gameObject);
+        }
+
+        if (KitchenGameLobby.Instance != null)
+        {
+            Destroy(KitchenGameLobby.Instance.gameObject);
+        }
+
+        if (KitchGameMultiPlayer.Instance != null)
+        {
+            Destroy(KitchGameMultiPlayer.Instance.gameObject);
         }
     }
 }

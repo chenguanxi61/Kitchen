@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,12 +6,23 @@ public class PlatesCounter : BaseCounter
 {
     public UnityAction OnPlateSpawned;
     public UnityAction OnPlateRemoved;
-    
+
     [SerializeField] private float spawnPlateTimer;
     [SerializeField] private float spawnPlateTimerMax = 4f;
     [SerializeField] private KitchenObjSO plateKitchenObjSO;
-    private int plateSpawnedAmount;
+
+    private readonly NetworkVariable<int> plateSpawnedAmountNetworkVariable = new NetworkVariable<int>(0);
     private int plateSpawnedAmountMax = 4;
+
+    public override void OnNetworkSpawn()
+    {
+        plateSpawnedAmountNetworkVariable.OnValueChanged += PlateSpawnedAmountNetworkVariable_OnValueChanged;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        plateSpawnedAmountNetworkVariable.OnValueChanged -= PlateSpawnedAmountNetworkVariable_OnValueChanged;
+    }
 
     private void Update()
     {
@@ -22,47 +30,73 @@ public class PlatesCounter : BaseCounter
         {
             return;
         }
+
         spawnPlateTimer += Time.deltaTime;
         if (spawnPlateTimer >= spawnPlateTimerMax)
         {
             spawnPlateTimer = 0f;
-            if (plateSpawnedAmount < plateSpawnedAmountMax)
+            if (plateSpawnedAmountNetworkVariable.Value < plateSpawnedAmountMax)
             {
-               SpawnPlateServerRpc();
+                plateSpawnedAmountNetworkVariable.Value++;
             }
         }
     }
-    [ServerRpc]
-    private void SpawnPlateServerRpc()
-    {
-        SpawnPlateClientRpc();
-    }
-    [ClientRpc]
-    private void SpawnPlateClientRpc()
-    {
-        plateSpawnedAmount++;
-        OnPlateSpawned?.Invoke();
-    }
+
     public override void Interact(Player player)
     {
-        if (!player.HasKitchenObj()&&plateSpawnedAmount>0)
+        if (IsServer)
         {
-            //玩家手上没盘子 拿起盘子
-            
-            KitchenObj.SpawnKitchenObj(plateKitchenObjSO, player);
-            InteractServerRpc();
+            InteractInternal(player);
+        }
+        else
+        {
+            InteractServerRpc(player.NetworkObject);
         }
     }
-    
-    [ServerRpc (RequireOwnership = false)]
-    private void InteractServerRpc()
+
+    public int GetPlateSpawnedAmount()
     {
-        InteractClientRpc();
+        return plateSpawnedAmountNetworkVariable.Value;
     }
-    [ClientRpc]
-    private void InteractClientRpc()
+
+    [ServerRpc(RequireOwnership = false)]
+    private void InteractServerRpc(NetworkObjectReference playerNetworkObjectReference)
     {
-        plateSpawnedAmount--;
-        OnPlateSpawned?.Invoke();
+        if (!playerNetworkObjectReference.TryGet(out NetworkObject playerNetworkObject))
+        {
+            return;
+        }
+
+        Player player = playerNetworkObject.GetComponent<Player>();
+        if (player == null)
+        {
+            return;
+        }
+
+        InteractInternal(player);
+    }
+
+    private void InteractInternal(Player player)
+    {
+        if (!player.HasKitchenObj() && plateSpawnedAmountNetworkVariable.Value > 0)
+        {
+            KitchenObj.SpawnKitchenObj(plateKitchenObjSO, player);
+            plateSpawnedAmountNetworkVariable.Value--;
+        }
+    }
+
+    private void PlateSpawnedAmountNetworkVariable_OnValueChanged(int previousValue, int newValue)
+    {
+        int amountDelta = newValue - previousValue;
+
+        for (int i = 0; i < amountDelta; i++)
+        {
+            OnPlateSpawned?.Invoke();
+        }
+
+        for (int i = 0; i < -amountDelta; i++)
+        {
+            OnPlateRemoved?.Invoke();
+        }
     }
 }

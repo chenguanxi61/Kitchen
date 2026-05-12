@@ -27,6 +27,16 @@ public class DeliverManager : NetworkBehaviour
         Instance = this;
     }
 
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
     public override void OnNetworkSpawn()
     {
         if (!IsServer)
@@ -71,21 +81,63 @@ public class DeliverManager : NetworkBehaviour
         }
 
         int randomIndex = Random.Range(0, recipeSOList.Count);
+        AddRecipe(randomIndex);
         SpawnNewRecipeClientRpc(randomIndex);
     }
 
     [ClientRpc]
     private void SpawnNewRecipeClientRpc(int recipeIndex)
     {
+        if (IsServer)
+        {
+            return;
+        }
+
+        AddRecipe(recipeIndex);
+    }
+
+    private void AddRecipe(int recipeIndex)
+    {
         RecipeSO recipe = recipeSOList[recipeIndex];
         waitingRecipeSOList.Add(recipe);
         OnRecipeSpawned?.Invoke();
     }
 
-    public bool DeliverRecipe(PlateKitchObj plateKitchObj)
+    public void DeliverRecipe(PlateKitchObj plateKitchObj)
     {
-        List<KitchenObjSO> plateList = plateKitchObj.GetKitchenObjSOList();
+        DeliverRecipeServerRpc(plateKitchObj.NetworkObject);
+    }
 
+    [ServerRpc(RequireOwnership = false)]
+    private void DeliverRecipeServerRpc(NetworkObjectReference plateNetworkObjectReference)
+    {
+        if (!plateNetworkObjectReference.TryGet(out NetworkObject plateNetworkObject))
+        {
+            return;
+        }
+
+        PlateKitchObj plateKitchObj = plateNetworkObject.GetComponent<PlateKitchObj>();
+        if (plateKitchObj == null)
+        {
+            return;
+        }
+
+        int matchingRecipeIndex = GetMatchingRecipeIndex(plateKitchObj.GetKitchenObjSOList());
+        if (matchingRecipeIndex == -1)
+        {
+            Debug.Log("Delivery failed.");
+            OnDeliveryFail?.Invoke();
+            DeliverIncorrectRecipeClientRpc();
+            return;
+        }
+
+        KitchenObj.DestoryKitchenObj(plateKitchObj);
+        DeliverCorrectRecipe(matchingRecipeIndex);
+        DeliverCorrectRecipeClientRpc(matchingRecipeIndex);
+    }
+
+    private int GetMatchingRecipeIndex(List<KitchenObjSO> plateList)
+    {
         for (int i = 0; i < waitingRecipeSOList.Count; i++)
         {
             RecipeSO waitingRecipeSO = waitingRecipeSOList[i];
@@ -96,11 +148,9 @@ public class DeliverManager : NetworkBehaviour
             }
 
             bool plateMatchesRecipe = true;
-
             foreach (KitchenObjSO recipeKitchenObjSO in waitingRecipeSO.kitchenObjSOList)
             {
                 bool ingredientFound = false;
-
                 foreach (KitchenObjSO plateKitchenObjSO in plateList)
                 {
                     if (plateKitchenObjSO == recipeKitchenObjSO)
@@ -119,41 +169,36 @@ public class DeliverManager : NetworkBehaviour
 
             if (plateMatchesRecipe)
             {
-                DeliverRecipeServerRpc(i);
-                return true;
+                return i;
             }
         }
 
-        Debug.Log("Delivery failed.");
-        DeliverIncorrectRecipeServerRpc();
-        return false;
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void DeliverIncorrectRecipeServerRpc()
-    {
-        DeliverIncorrectRecipeClientRpc();
+        return -1;
     }
 
     [ClientRpc]
     private void DeliverIncorrectRecipeClientRpc()
     {
-        OnDeliveryFail?.Invoke();
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void DeliverRecipeServerRpc(int recipeIndex)
-    {
-        if (recipeIndex < 0 || recipeIndex >= waitingRecipeSOList.Count)
+        if (IsServer)
         {
             return;
         }
 
-        DeliverCorrectRecipeClientRpc(recipeIndex);
+        OnDeliveryFail?.Invoke();
     }
 
     [ClientRpc]
     private void DeliverCorrectRecipeClientRpc(int recipeIndex, ClientRpcParams rpcParams = default)
+    {
+        if (IsServer)
+        {
+            return;
+        }
+
+        DeliverCorrectRecipe(recipeIndex);
+    }
+
+    private void DeliverCorrectRecipe(int recipeIndex)
     {
         if (recipeIndex < 0 || recipeIndex >= waitingRecipeSOList.Count)
         {

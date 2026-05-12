@@ -38,6 +38,7 @@ public class Player : NetworkBehaviour ,IKitchObjParent
     private bool isWalking = false;
 
     private BaseCounter selectedCounter;
+    private bool isSubscribedToInput;
 
     public void Awake()
     {
@@ -49,21 +50,53 @@ public class Player : NetworkBehaviour ,IKitchObjParent
         {
             LocalInstance = this;
             OnAnyPlayerSpawned?.Invoke();
+            TrySubscribeInput();
         }
     }
 
     public override void OnNetworkDespawn()
     {
+        TryUnsubscribeInput();
+
         if (IsOwner && LocalInstance == this)
         {
             LocalInstance = null;
         }
     }
 
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        TryUnsubscribeInput();
+    }
+
     private void Start()
     {
+        TrySubscribeInput();
+    }
+
+    private void TrySubscribeInput()
+    {
+        if (!IsOwner || isSubscribedToInput || GameInput.Instance == null)
+        {
+            return;
+        }
+
         GameInput.Instance.OnInteractAction += GameInput_OnInteractAction;
         GameInput.Instance.OnInteractAlternateAction += GameInput_OnInteractAlternateAction;
+        isSubscribedToInput = true;
+    }
+
+    private void TryUnsubscribeInput()
+    {
+        if (!isSubscribedToInput || GameInput.Instance == null)
+        {
+            return;
+        }
+
+        GameInput.Instance.OnInteractAction -= GameInput_OnInteractAction;
+        GameInput.Instance.OnInteractAlternateAction -= GameInput_OnInteractAlternateAction;
+        isSubscribedToInput = false;
     }
 
     private void GameInput_OnInteractAlternateAction(object sender, EventArgs e)

@@ -1,6 +1,5 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -9,12 +8,17 @@ public class GamePauseUI : MonoBehaviour
     public Button MainMenuButton;
     public Button ResumeButton;
 
-    public void Awake()
+    private void Awake()
     {
-        MainMenuButton.onClick.AddListener((() => 
-            Loader.Load(Loader.Scene.MainMenu)));
-        ResumeButton.onClick.AddListener((() => 
-            GameManager.Instance.PauseGame()));
+        MainMenuButton.onClick.AddListener(() =>
+        {
+            MainMenuButton.interactable = false;
+            ResumeButton.interactable = false;
+            StartCoroutine(LeaveNetworkSessionAndLoadMainMenu());
+        });
+
+        ResumeButton.onClick.AddListener(() =>
+            GameManager.Instance.PauseGame());
     }
 
     private void Start()
@@ -24,16 +28,44 @@ public class GamePauseUI : MonoBehaviour
         Hide();
     }
 
+    private void OnDestroy()
+    {
+        if (GameManager.Instance == null)
+        {
+            return;
+        }
+
+        GameManager.Instance.OnGamePaused -= GameManager_OnGamePaused;
+        GameManager.Instance.OnGameUnPaused -= GameManager_OnGameUnPaused;
+    }
+
+    private IEnumerator LeaveNetworkSessionAndLoadMainMenu()
+    {
+        Time.timeScale = 1f;
+        KitchGameMultiPlayer.MarkLocalClientLeftSession();
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+
+            while (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+            {
+                yield return null;
+            }
+        }
+
+        Loader.Load(Loader.Scene.MainMenu);
+    }
+
     private void GameManager_OnGameUnPaused()
     {
         Hide();
     }
+
     private void GameManager_OnGamePaused()
     {
         Show();
     }
-    
-    
 
     private void Show()
     {
@@ -45,4 +77,3 @@ public class GamePauseUI : MonoBehaviour
         gameObject.SetActive(false);
     }
 }
-

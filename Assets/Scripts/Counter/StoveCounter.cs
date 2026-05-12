@@ -68,10 +68,15 @@ public class StoveCounter : BaseCounter, IHasProgressBar
                     burningTime = 0f;
                     burningRecipeSO = GetBurningRecipeSOWithInput(cookedKitchenObjSO);
                     SetState(State.Fryed);
-                    SetProgress(0f);
+                    SetProgress(burningRecipeSO == null ? 1f : 0f);
                 }
                 break;
             case State.Fryed:
+                if (burningRecipeSO == null)
+                {
+                    return;
+                }
+
                 burningTime += Time.deltaTime;
                 SetProgress(burningTime / burningRecipeSO.burningTimerMax);
 

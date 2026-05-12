@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 
 public class KitchGameMultiPlayer : NetworkBehaviour
 {
-    private const int MAX_PLAYERS = 4;
+    public const int MAX_PLAYERS = 4;
     private static readonly Color32[] DEFAULT_PLAYER_COLORS = new Color32[]
     {
         new Color32(244, 67, 54, 255),
@@ -17,6 +17,7 @@ public class KitchGameMultiPlayer : NetworkBehaviour
         new Color32(255, 152, 0, 255),
     };
     public static KitchGameMultiPlayer Instance { get; private set; }
+    public static bool HasLocalClientLeftSession { get; private set; }
 
     [SerializeField] private KitchenObjListSO kitchenObjListSO;
     [SerializeField] private NetworkObject playerPrefab;
@@ -39,6 +40,16 @@ public class KitchGameMultiPlayer : NetworkBehaviour
         playerColorCacheDictionary = new Dictionary<ulong, Color32>();
     }
 
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
     private void OnListChange(NetworkListEvent<PlayerData> changeEvent)
     {
         SyncPlayerColorCacheFromNetworkList();
@@ -47,6 +58,7 @@ public class KitchGameMultiPlayer : NetworkBehaviour
 
     public void StartHost()
     {
+        HasLocalClientLeftSession = false;
         NetworkManager.Singleton.OnClientConnectedCallback -= Singleton_OnClientConnectedCallback;
         NetworkManager.Singleton.OnClientConnectedCallback += Singleton_OnClientConnectedCallback;
         NetworkManager.Singleton.StartHost();
@@ -58,9 +70,28 @@ public class KitchGameMultiPlayer : NetworkBehaviour
         AddPlayerDataIfMissing(clientID);
     }
 
-    public void StartClient()
+    public bool StartClient()
     {
-        NetworkManager.Singleton.StartClient();
+        if (HasLocalClientLeftSession)
+        {
+            Debug.LogWarning("This client already left the session and cannot reconnect in this run.");
+            return false;
+        }
+
+        return NetworkManager.Singleton.StartClient();
+    }
+
+    public static void MarkLocalClientLeftSession()
+    {
+        if (NetworkManager.Singleton == null)
+        {
+            return;
+        }
+
+        if (NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsHost)
+        {
+            HasLocalClientLeftSession = true;
+        }
     }
 
     public void SpawnKitchenObj(KitchenObjSO kitchenObjSO, IKitchObjParent kitchenObjParent)

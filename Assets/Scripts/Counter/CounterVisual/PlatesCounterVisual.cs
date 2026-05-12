@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +6,7 @@ public class PlatesCounterVisual : MonoBehaviour
     [SerializeField] private Transform counterTopPoint;
     [SerializeField] private Transform plateVisualPrefab;
     [SerializeField] private PlatesCounter platesCounter;
+
     private List<GameObject> plateVisualGameObjectList;
 
     private void Awake()
@@ -19,18 +18,38 @@ public class PlatesCounterVisual : MonoBehaviour
     {
         platesCounter.OnPlateSpawned += PlatesCounter_OnPlateSpawned;
         platesCounter.OnPlateRemoved += PlatesCounter_OnPlateRemoved;
+
+        for (int i = 0; i < platesCounter.GetPlateSpawnedAmount(); i++)
+        {
+            PlatesCounter_OnPlateSpawned();
+        }
     }
-    
+
+    private void OnDestroy()
+    {
+        if (platesCounter == null)
+        {
+            return;
+        }
+
+        platesCounter.OnPlateSpawned -= PlatesCounter_OnPlateSpawned;
+        platesCounter.OnPlateRemoved -= PlatesCounter_OnPlateRemoved;
+    }
+
     private void PlatesCounter_OnPlateSpawned()
     {
         Transform plateVisualTransform = Instantiate(plateVisualPrefab, counterTopPoint);
         plateVisualTransform.localPosition = new Vector3(0f, 0.1f * plateVisualGameObjectList.Count, 0f);
         plateVisualGameObjectList.Add(plateVisualTransform.gameObject);
-       
     }
-    
+
     private void PlatesCounter_OnPlateRemoved()
     {
+        if (plateVisualGameObjectList.Count == 0)
+        {
+            return;
+        }
+
         GameObject plateVisualGameObject = plateVisualGameObjectList[plateVisualGameObjectList.Count - 1];
         plateVisualGameObjectList.RemoveAt(plateVisualGameObjectList.Count - 1);
         Destroy(plateVisualGameObject);

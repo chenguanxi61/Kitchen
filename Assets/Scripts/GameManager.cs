@@ -25,8 +25,8 @@ public class GameManager : MonoBehaviour
     
     private float waitingToStartTimer = 1f;
     private float countDownToStartTimer = 3f;
-    private float gamePlayingTimer = 300f;
-    private float gamePlayingTimerMax = 300f;
+    private float gamePlayingTimer = 160f;
+    private float gamePlayingTimerMax = 160f;
     
     public bool isPaused = false;
     private void Awake()
@@ -41,6 +41,21 @@ public class GameManager : MonoBehaviour
         state = State.WaitingToStart;
         OnStateChanged?.Invoke(state);
         GameInput.Instance.OnPauseAction += GameInput_OnPauseAction;
+    }
+
+    private void OnDestroy()
+    {
+        if (GameInput.Instance != null)
+        {
+            GameInput.Instance.OnPauseAction -= GameInput_OnPauseAction;
+        }
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+
+        Time.timeScale = 1f;
     }
 
     public void GameInput_OnPauseAction()
