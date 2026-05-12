@@ -99,6 +99,11 @@ public class GameManager : MonoBehaviour
     {
         return state == State.GamePlaying;
     }
+
+    public bool IsPaused()
+    {
+        return isPaused;
+    }
     
     public float GetCountDownToStartTimer()
     {
@@ -120,12 +125,10 @@ public class GameManager : MonoBehaviour
         isPaused = !isPaused;
         if (isPaused)
         {
-            Time.timeScale = 0f;
             OnGamePaused?.Invoke();
         }
         else
         {
-            Time.timeScale = 1f;
             OnGameUnPaused?.Invoke();
         }
         

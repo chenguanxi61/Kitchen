@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class GameOverUI : MonoBehaviour
 {
     [SerializeField] private Text recopesDeliveredText;
+    [SerializeField] private Text scoreText;
 
     public void Start()
     {
@@ -19,6 +20,10 @@ public class GameOverUI : MonoBehaviour
         if (GameManager.Instance.IsOver())
         {
             recopesDeliveredText.text = DeliverManager.Instance.GetSuccessfulDeliveries().ToString();
+            if (scoreText != null)
+            {
+                scoreText.text = DeliverManager.Instance.GetScore().ToString();
+            }
             Show();
         }
         else

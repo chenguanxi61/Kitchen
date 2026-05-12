@@ -17,3 +17,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 842a9703ec6114749b2642dd870f9b19, type: 2}
   - {fileID: 11400000, guid: d91213852d571a0498df32810718537f, type: 2}
   name: CheeseBurger
+  orderTimeMax: 35
+  scoreMax: 150
+  scoreMin: 50

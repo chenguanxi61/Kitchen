@@ -101,6 +101,11 @@ public class Player : NetworkBehaviour ,IKitchObjParent
 
     private void GameInput_OnInteractAlternateAction(object sender, EventArgs e)
     {
+        if (!CanControl())
+        {
+            return;
+        }
+
         if(selectedCounter != null)
         {
             selectedCounter.InteractAlternate(this);
@@ -110,6 +115,11 @@ public class Player : NetworkBehaviour ,IKitchObjParent
 
     private void GameInput_OnInteractAction(object sender, EventArgs e)
     {
+        if (!CanControl())
+        {
+            return;
+        }
+
         if(selectedCounter != null)
         {
             selectedCounter.Interact(this);
@@ -122,9 +132,24 @@ public class Player : NetworkBehaviour ,IKitchObjParent
         {
             return;
         }
+
+        if (!CanControl())
+        {
+            isWalking = false;
+            SetSelectedCounter(null);
+            return;
+        }
+
         //HandleMovementServerAuth();
         HandleMovement();
         HandleInteractions();
+    }
+
+    private bool CanControl()
+    {
+        return GameManager.Instance != null &&
+               GameManager.Instance.IsPlaying() &&
+               !GameManager.Instance.IsPaused();
     }
 
     public bool IsWalking()

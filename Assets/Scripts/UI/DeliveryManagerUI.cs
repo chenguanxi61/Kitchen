@@ -1,56 +1,55 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
+
 public class DeliveryManagerUI : MonoBehaviour
 {
-    
-    
     [SerializeField] private Transform container;
-    [SerializeField] private Transform itemTemplate;//菜品模板
-    
-    
-
+    [SerializeField] private Transform itemTemplate;
 
     private void Awake()
     {
         itemTemplate.gameObject.SetActive(false);
     }
-    
+
     private void Start()
     {
-        DeliverManager.Instance.OnRecipeSpawned += DeliverManager_OnRecipeSpawned;
-        DeliverManager.Instance.OnRecipeCompleted += DeliverManager_OnRecipeCompleted;
+        DeliverManager.Instance.OnRecipeSpawned += DeliverManager_OnRecipeChanged;
+        DeliverManager.Instance.OnRecipeCompleted += DeliverManager_OnRecipeChanged;
         UpdateVisual();
     }
+
+    private void OnDestroy()
+    {
+        if (DeliverManager.Instance == null)
+        {
+            return;
+        }
+
+        DeliverManager.Instance.OnRecipeSpawned -= DeliverManager_OnRecipeChanged;
+        DeliverManager.Instance.OnRecipeCompleted -= DeliverManager_OnRecipeChanged;
+    }
+
     private void UpdateVisual()
     {
         foreach (Transform child in container)
         {
-            if(child==itemTemplate) continue;
+            if (child == itemTemplate)
+            {
+                continue;
+            }
+
             Destroy(child.gameObject);
         }
 
-        foreach (RecipeSO recipeSo in DeliverManager.Instance.GetWaitingRecipeSOList())
+        foreach (DeliveryOrder order in DeliverManager.Instance.GetWaitingOrderList())
         {
-            //在container下实例化菜品模板
             Transform itemTransform = Instantiate(itemTemplate, container);
             itemTransform.gameObject.SetActive(true);
-            itemTransform.GetComponent<DeliveryManagerSingleUI>().SetTemplate(recipeSo);
-            
+            itemTransform.GetComponent<DeliveryManagerSingleUI>().SetOrder(order);
         }
-       
     }
-    
-    private void DeliverManager_OnRecipeSpawned()
+
+    private void DeliverManager_OnRecipeChanged()
     {
         UpdateVisual();
     }
-    
-    private void DeliverManager_OnRecipeCompleted()
-    {
-        UpdateVisual();
-    }   
 }

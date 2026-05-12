@@ -12,15 +12,19 @@ public class DeliverManager : NetworkBehaviour
 
     public Action OnRecipeSpawned;
     public Action OnRecipeCompleted;
+    public Action OnRecipeExpired;
     public Action OnDeliverySuccess;
     public Action OnDeliveryFail;
+    public Action OnScoreChanged;
 
     [SerializeField] private List<RecipeSO> recipeSOList;
     [SerializeField] private int waitingRecipeMax = 4;
 
-    private readonly List<RecipeSO> waitingRecipeSOList = new List<RecipeSO>();
+    private readonly List<DeliveryOrder> waitingOrderList = new List<DeliveryOrder>();
     private int successfulDeliveries;
+    private int score;
     private Coroutine spawnCoroutine;
+    private bool hasGameStarted;
 
     private void Awake()
     {
@@ -39,17 +43,26 @@ public class DeliverManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsServer)
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnStateChanged += GameManager_OnStateChanged;
+        }
+
+        if (!IsServer || GameManager.Instance == null || !GameManager.Instance.IsPlaying())
         {
             return;
         }
 
-        SpawnNewRecipe();
-        spawnCoroutine = StartCoroutine(SpawnRecipeLoop());
+        StartOrders();
     }
 
     public override void OnNetworkDespawn()
     {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnStateChanged -= GameManager_OnStateChanged;
+        }
+
         if (spawnCoroutine != null)
         {
             StopCoroutine(spawnCoroutine);
@@ -57,11 +70,56 @@ public class DeliverManager : NetworkBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (!hasGameStarted)
+        {
+            return;
+        }
+
+        TickOrders(Time.deltaTime, IsServer);
+    }
+
+    private void GameManager_OnStateChanged(GameManager.State state)
+    {
+        if (!IsServer || state != GameManager.State.GamePlaying)
+        {
+            return;
+        }
+
+        StartOrders();
+    }
+
+    private void StartOrders()
+    {
+        if (hasGameStarted)
+        {
+            return;
+        }
+
+        hasGameStarted = true;
+        SpawnNewRecipe();
+        spawnCoroutine = StartCoroutine(SpawnRecipeLoop());
+    }
+
+    private void TickOrders(float deltaTime, bool expireTimedOutOrders)
+    {
+        for (int i = waitingOrderList.Count - 1; i >= 0; i--)
+        {
+            waitingOrderList[i].Tick(deltaTime);
+
+            if (expireTimedOutOrders && waitingOrderList[i].TimeRemaining <= 0f)
+            {
+                ExpireOrder(i);
+            }
+        }
+    }
+
     private IEnumerator SpawnRecipeLoop()
     {
         while (true)
         {
-            if (waitingRecipeSOList.Count < waitingRecipeMax)
+            if (waitingOrderList.Count < waitingRecipeMax)
             {
                 yield return new WaitForSeconds(4f);
                 SpawnNewRecipe();
@@ -75,7 +133,7 @@ public class DeliverManager : NetworkBehaviour
 
     private void SpawnNewRecipe()
     {
-        if (!IsServer || waitingRecipeSOList.Count >= waitingRecipeMax)
+        if (!IsServer || waitingOrderList.Count >= waitingRecipeMax)
         {
             return;
         }
@@ -99,7 +157,7 @@ public class DeliverManager : NetworkBehaviour
     private void AddRecipe(int recipeIndex)
     {
         RecipeSO recipe = recipeSOList[recipeIndex];
-        waitingRecipeSOList.Add(recipe);
+        waitingOrderList.Add(new DeliveryOrder(recipe));
         OnRecipeSpawned?.Invoke();
     }
 
@@ -131,16 +189,17 @@ public class DeliverManager : NetworkBehaviour
             return;
         }
 
+        int earnedScore = waitingOrderList[matchingRecipeIndex].GetCurrentScore();
         KitchenObj.DestoryKitchenObj(plateKitchObj);
-        DeliverCorrectRecipe(matchingRecipeIndex);
-        DeliverCorrectRecipeClientRpc(matchingRecipeIndex);
+        DeliverCorrectRecipe(matchingRecipeIndex, earnedScore);
+        DeliverCorrectRecipeClientRpc(matchingRecipeIndex, earnedScore);
     }
 
     private int GetMatchingRecipeIndex(List<KitchenObjSO> plateList)
     {
-        for (int i = 0; i < waitingRecipeSOList.Count; i++)
+        for (int i = 0; i < waitingOrderList.Count; i++)
         {
-            RecipeSO waitingRecipeSO = waitingRecipeSOList[i];
+            RecipeSO waitingRecipeSO = waitingOrderList[i].Recipe;
 
             if (waitingRecipeSO.kitchenObjSOList.Count != plateList.Count)
             {
@@ -176,6 +235,34 @@ public class DeliverManager : NetworkBehaviour
         return -1;
     }
 
+    private void ExpireOrder(int orderIndex)
+    {
+        if (orderIndex < 0 || orderIndex >= waitingOrderList.Count)
+        {
+            return;
+        }
+
+        waitingOrderList.RemoveAt(orderIndex);
+        OnRecipeCompleted?.Invoke();
+        OnRecipeExpired?.Invoke();
+        OnDeliveryFail?.Invoke();
+        ExpireOrderClientRpc(orderIndex);
+    }
+
+    [ClientRpc]
+    private void ExpireOrderClientRpc(int orderIndex)
+    {
+        if (IsServer || orderIndex < 0 || orderIndex >= waitingOrderList.Count)
+        {
+            return;
+        }
+
+        waitingOrderList.RemoveAt(orderIndex);
+        OnRecipeCompleted?.Invoke();
+        OnRecipeExpired?.Invoke();
+        OnDeliveryFail?.Invoke();
+    }
+
     [ClientRpc]
     private void DeliverIncorrectRecipeClientRpc()
     {
@@ -188,37 +275,55 @@ public class DeliverManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    private void DeliverCorrectRecipeClientRpc(int recipeIndex, ClientRpcParams rpcParams = default)
+    private void DeliverCorrectRecipeClientRpc(int recipeIndex, int earnedScore, ClientRpcParams rpcParams = default)
     {
         if (IsServer)
         {
             return;
         }
 
-        DeliverCorrectRecipe(recipeIndex);
+        DeliverCorrectRecipe(recipeIndex, earnedScore);
     }
 
-    private void DeliverCorrectRecipe(int recipeIndex)
+    private void DeliverCorrectRecipe(int recipeIndex, int earnedScore)
     {
-        if (recipeIndex < 0 || recipeIndex >= waitingRecipeSOList.Count)
+        if (recipeIndex < 0 || recipeIndex >= waitingOrderList.Count)
         {
             return;
         }
 
         Debug.Log("Delivery success.");
         successfulDeliveries++;
-        waitingRecipeSOList.RemoveAt(recipeIndex);
+        score += earnedScore;
+        waitingOrderList.RemoveAt(recipeIndex);
         OnRecipeCompleted?.Invoke();
         OnDeliverySuccess?.Invoke();
+        OnScoreChanged?.Invoke();
     }
 
     public List<RecipeSO> GetWaitingRecipeSOList()
     {
-        return waitingRecipeSOList;
+        List<RecipeSO> recipeList = new List<RecipeSO>();
+        foreach (DeliveryOrder order in waitingOrderList)
+        {
+            recipeList.Add(order.Recipe);
+        }
+
+        return recipeList;
+    }
+
+    public List<DeliveryOrder> GetWaitingOrderList()
+    {
+        return waitingOrderList;
     }
 
     public int GetSuccessfulDeliveries()
     {
         return successfulDeliveries;
+    }
+
+    public int GetScore()
+    {
+        return score;
     }
 }

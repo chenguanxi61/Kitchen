@@ -16,3 +16,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c148270b1c191b3439ffce6ed8d9e293, type: 2}
   - {fileID: 11400000, guid: fa78bce916bab214eb721b324f7709b4, type: 2}
   name: Salad
+  orderTimeMax: 35
+  scoreMax: 150
+  scoreMin: 50

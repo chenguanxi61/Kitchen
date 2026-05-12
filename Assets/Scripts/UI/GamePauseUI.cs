@@ -7,9 +7,22 @@ public class GamePauseUI : MonoBehaviour
 {
     public Button MainMenuButton;
     public Button ResumeButton;
+    [SerializeField] private Button tutorialButton;
 
     private void Awake()
     {
+        if (tutorialButton == null)
+        {
+            foreach (Button button in GetComponentsInChildren<Button>(true))
+            {
+                if (button.gameObject.name == "TutorialBtn")
+                {
+                    tutorialButton = button;
+                    break;
+                }
+            }
+        }
+
         MainMenuButton.onClick.AddListener(() =>
         {
             MainMenuButton.interactable = false;
@@ -19,6 +32,17 @@ public class GamePauseUI : MonoBehaviour
 
         ResumeButton.onClick.AddListener(() =>
             GameManager.Instance.PauseGame());
+
+        if (tutorialButton != null)
+        {
+            tutorialButton.onClick.AddListener(() =>
+            {
+                if (TutorialUI.Instance != null)
+                {
+                    TutorialUI.Instance.Show();
+                }
+            });
+        }
     }
 
     private void Start()
