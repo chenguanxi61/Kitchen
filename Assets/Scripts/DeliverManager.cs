@@ -48,12 +48,19 @@ public class DeliverManager : NetworkBehaviour
             GameManager.Instance.OnStateChanged += GameManager_OnStateChanged;
         }
 
-        if (!IsServer || GameManager.Instance == null || !GameManager.Instance.IsPlaying())
+        if (GameManager.Instance == null || !GameManager.Instance.IsPlaying())
         {
             return;
         }
 
-        StartOrders();
+        if (IsServer)
+        {
+            StartOrders();
+        }
+        else
+        {
+            hasGameStarted = true;
+        }
     }
 
     public override void OnNetworkDespawn()
@@ -82,12 +89,19 @@ public class DeliverManager : NetworkBehaviour
 
     private void GameManager_OnStateChanged(GameManager.State state)
     {
-        if (!IsServer || state != GameManager.State.GamePlaying)
+        if (state != GameManager.State.GamePlaying)
         {
             return;
         }
 
-        StartOrders();
+        if (IsServer)
+        {
+            StartOrders();
+        }
+        else
+        {
+            hasGameStarted = true;
+        }
     }
 
     private void StartOrders()
@@ -151,6 +165,7 @@ public class DeliverManager : NetworkBehaviour
             return;
         }
 
+        hasGameStarted = true;
         AddRecipe(recipeIndex);
     }
 
@@ -158,6 +173,7 @@ public class DeliverManager : NetworkBehaviour
     {
         RecipeSO recipe = recipeSOList[recipeIndex];
         waitingOrderList.Add(new DeliveryOrder(recipe));
+        Debug.Log("Adding recipe: " + recipeSOList.Count.ToString());
         OnRecipeSpawned?.Invoke();
     }
 

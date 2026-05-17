@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class PlateCompleteVisual : MonoBehaviour
@@ -13,6 +14,11 @@ public class PlateCompleteVisual : MonoBehaviour
 
     [SerializeField] private PlateKitchObj plateKitchObj;
     [SerializeField] private List<KitchenObjectSO_Hamburger> kitchenObjectSO_HamburgerList;
+
+    private void Awake()
+    {
+        StripNestedNetworkComponents();
+    }
 
     private void Start()
     {
@@ -65,6 +71,19 @@ public class PlateCompleteVisual : MonoBehaviour
                     visualEntry.gameObject.SetActive(true);
                 }
             }
+        }
+    }
+
+    private void StripNestedNetworkComponents()
+    {
+        foreach (NetworkBehaviour networkBehaviour in GetComponentsInChildren<NetworkBehaviour>(true))
+        {
+            DestroyImmediate(networkBehaviour);
+        }
+
+        foreach (NetworkObject networkObject in GetComponentsInChildren<NetworkObject>(true))
+        {
+            DestroyImmediate(networkObject);
         }
     }
 }

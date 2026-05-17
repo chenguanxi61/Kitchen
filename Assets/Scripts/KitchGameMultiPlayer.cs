@@ -22,6 +22,7 @@ public class KitchGameMultiPlayer : NetworkBehaviour
     [SerializeField] private KitchenObjListSO kitchenObjListSO;
     [SerializeField] private NetworkObject playerPrefab;
     [SerializeField] private List<Color> playerColorList;
+    [SerializeField] private Transform[] playerSpawnPointArray;
 
     private Dictionary<ulong, bool> playerReadyDictionary;
     private Dictionary<ulong, NetworkObject> spawnedPlayerDictionary;
@@ -346,9 +347,12 @@ public class KitchGameMultiPlayer : NetworkBehaviour
     {
         foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
+            Vector3 spawnPosition = GetPlayerSpawnPosition(clientId);
+
             if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out NetworkClient networkClient) &&
                 networkClient.PlayerObject != null)
             {
+                networkClient.PlayerObject.transform.position = spawnPosition;
                 continue;
             }
 
@@ -357,10 +361,54 @@ public class KitchGameMultiPlayer : NetworkBehaviour
                 continue;
             }
 
-            NetworkObject playerNetworkObject = Instantiate(playerPrefab);
+            NetworkObject playerNetworkObject = Instantiate(playerPrefab, spawnPosition, Quaternion.identity);
             playerNetworkObject.SpawnAsPlayerObject(clientId, true);
             spawnedPlayerDictionary[clientId] = playerNetworkObject;
         }
+    }
+
+    private Vector3 GetPlayerSpawnPosition(ulong clientId)
+    {
+        int playerIndex = GetPlayerSpawnIndex(clientId);
+
+        if (playerSpawnPointArray != null &&
+            playerIndex >= 0 &&
+            playerIndex < playerSpawnPointArray.Length &&
+            playerSpawnPointArray[playerIndex] != null)
+        {
+            return playerSpawnPointArray[playerIndex].position;
+        }
+
+        Vector3[] fallbackSpawnOffsetArray =
+        {
+            new Vector3(-1.5f, 0f, -1.5f),
+            new Vector3(1.5f, 0f, -1.5f),
+            new Vector3(-1.5f, 0f, 1.5f),
+            new Vector3(1.5f, 0f, 1.5f),
+        };
+
+        return playerPrefab.transform.position + fallbackSpawnOffsetArray[playerIndex % fallbackSpawnOffsetArray.Length];
+    }
+
+    private int GetPlayerSpawnIndex(ulong clientId)
+    {
+        if (TryGetPlayerIndexByClientId(clientId, out int playerIndex))
+        {
+            return playerIndex;
+        }
+
+        int connectedClientIndex = 0;
+        foreach (ulong connectedClientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            if (connectedClientId == clientId)
+            {
+                return connectedClientIndex;
+            }
+
+            connectedClientIndex++;
+        }
+
+        return 0;
     }
     //判断该索引玩家是否链接
     public bool IsPlayerIndexConnected(int playerIndex)
