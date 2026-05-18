@@ -9,10 +9,14 @@ _Build/
 MemoryCaptures/
 output/
 docs/
+tmp/
+node_modules/
+tools/
 
 # IDE
 .vscode/
 .idea/
+.cursor/
 *.csproj
 *.sln
 *.user
@@ -24,3 +28,7 @@ docs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local temporary native links
+jzmq.dll
+libzmq-mt-4_3_6.dll
